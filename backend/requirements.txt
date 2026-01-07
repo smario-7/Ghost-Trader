@@ -1,0 +1,26 @@
+# FastAPI i serwer
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Pydantic do walidacji
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Async HTTP
+aiohttp==3.9.1
+
+# Rate limiting
+slowapi==0.1.9
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Scheduling
+schedule==1.2.0
+
+# Database
+# SQLite jest wbudowany w Python
+
+# Logging
+# Logging jest wbudowany w Python

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .value {
+            color: #333;
+            font-family: monospace;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status.active {
+            background: #4ade80;
+            color: white;
+        }
+
+        .status.inactive {
+            background: #ef4444;
+            color: white;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #5568d3;
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #0ea5e9;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .link-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .link-box a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-box a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Trading Bot Dashboard</h1>
+            <p class="subtitle">Wersja 2.0 - Bezpieczna i rozszerzona</p>
+        </div>
+
+        <div class="card">
+            <h2>📊 Status Systemu</h2>
+            <div class="config-item">
+                <span class="label">Status:</span>
+                <span class="status active">● RUNNING</span>
+            </div>
+            <div class="config-item">
+                <span class="label">Backend API:</span>
+                <span class="value">http://localhost:8000</span>
+            </div>
+            <div class="config-item">
+                <span class="label">Dokumentacja API:</span>
+                <span class="value">http://localhost:8000/docs</span>
+            </div>
+            <div class="config-item">
+                <span class="label">Health Check:</span>
+                <span class="value">http://localhost:8000/health</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Quick Start</h2>
+            
+            <div class="info-box">
+                <h3>1. Konfiguracja</h3>
+                <p>Upewnij się, że plik <code>.env</code> jest poprawnie skonfigurowany z tokenem Telegram i API Key.</p>
+            </div>
+
+            <div class="info-box">
+                <h3>2. API Key</h3>
+                <p>Wszystkie requesty do API wymagają headera: <code>X-API-Key: twój_api_key</code></p>
+            </div>
+
+            <div class="info-box">
+                <h3>3. Sprawdź Health</h3>
+                <p>Odwiedź <code>http://localhost:8000/health</code> aby sprawdzić status systemu</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📚 Dokumentacja</h2>
+            
+            <div class="link-box">
+                <strong>README.md</strong><br>
+                <a href="../README.md" target="_blank">Pełna dokumentacja projektu</a>
+            </div>
+
+            <div class="link-box">
+                <strong>SECURITY.md</strong><br>
+                <a href="../docs/SECURITY.md" target="_blank">Analiza bezpieczeństwa i best practices</a>
+            </div>
+
+            <div class="link-box">
+                <strong>API Docs (Swagger)</strong><br>
+                <a href="http://localhost:8000/docs" target="_blank">Interaktywna dokumentacja API</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔧 Przykładowe komendy</h2>
+            
+            <div style="background: #1e293b; padding: 20px; border-radius: 5px; color: #f1f5f9; font-family: monospace; font-size: 13px; line-height: 1.8;">
+                <div style="color: #4ade80;"># Health check</div>
+                <div>curl http://localhost:8000/health</div>
+                <br>
+                <div style="color: #4ade80;"># Lista strategii (wymaga API Key)</div>
+                <div>curl -H "X-API-Key: YOUR_KEY" http://localhost:8000/strategies</div>
+                <br>
+                <div style="color: #4ade80;"># Test Telegram</div>
+                <div>curl -X POST -H "X-API-Key: YOUR_KEY" http://localhost:8000/test-telegram</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Bezpieczeństwo</h2>
+            <ul style="color: #334155; line-height: 2; margin-left: 20px;">
+                <li>✅ Zmienne środowiskowe w <code>.env</code></li>
+                <li>✅ API Key authentication</li>
+                <li>✅ Rate limiting (60 req/min)</li>
+                <li>✅ Walidacja danych (Pydantic)</li>
+                <li>✅ Prepared statements (SQL injection protection)</li>
+                <li>✅ CORS configuration</li>
+                <li>✅ Automatyczne backupy</li>
+                <li>✅ Strukturalne logowanie</li>
+            </ul>
+        </div>
+
+        <div class="card" style="text-align: center; color: #666;">
+            <p>Made with ❤️ for trading automation</p>
+            <p style="font-size: 12px; margin-top: 10px;">Trading Bot v2.0</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Cloudflare Tunnel Configuration
+# Lokalizacja: ~/.cloudflared/config.yml
+
+tunnel: TWÓJ_ID_TUNELU
+credentials-file: /home/TWOJA_NAZWA_UŻYTKOWNIKA/.cloudflared/TWÓJ_ID_TUNELU.json
+
+ingress:
+  # n8n (istniejący)
+  - hostname: n8n-mario.space
+    service: http://localhost:8443
+  
+  # Trading Bot Dashboard (NOWY)
+  - hostname: trading.n8n-mario.space
+    service: http://localhost:8080
+  
+  # Trading Bot API (NOWY - opcjonalny)
+  - hostname: api.n8n-mario.space
+    service: http://localhost:8000
+  
+  # Catch-all (musi być ostatni)
+  - service: http_status:404

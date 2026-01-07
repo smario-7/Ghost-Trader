@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: trading-bot-backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Persistent data
+      - ./data:/app/data
+      # Konfiguracja (read-only dla bezpieczeństwa)
+      - ./.env:/app/.env:ro
+    environment:
+      # Te zmienne są ładowane z .env
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - API_KEY=${API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_PATH=/app/data/trading_bot.db
+      - LOG_FILE=/app/data/logs/bot.log
+      - BACKUP_DIR=/app/data/backups
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8080}
+    restart: unless-stopped
+    networks:
+      - trading-bot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Scheduler - sprawdza sygnały co X minut
+  scheduler:
+    build: ./backend
+    container_name: trading-bot-scheduler
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - API_KEY=${API_KEY}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-15}
+      - DATABASE_PATH=/app/data/trading_bot.db
+      - LOG_FILE=/app/data/logs/scheduler.log
+    command: python -m app.scheduler
+    restart: unless-stopped
+    networks:
+      - trading-bot-network
+    depends_on:
+      - backend
+
+  # Frontend (opcjonalnie)
+  frontend:
+    image: nginx:alpine
+    container_name: trading-bot-frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks:
+      - trading-bot-network
+    depends_on:
+      - backend
+
+networks:
+  trading-bot-network:
+    driver: bridge
+
+volumes:
+  data:

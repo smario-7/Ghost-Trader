@@ -1,0 +1,18 @@
+tunnel: TWÓJ_ID_TUNELU
+credentials-file: /home/TWOJA_NAZWA_UŻYTKOWNIKA/.cloudflared/TWÓJ_ID_TUNELU.json
+
+ingress:
+  # n8n (istniejący - bez zmian)
+  - hostname: twojadomena-n8n.pl
+    service: http://localhost:8443
+  
+  # Trading Bot Dashboard (NOWY)
+  - hostname: trading.twojadomena-n8n.pl
+    service: http://localhost:8080
+  
+  # Trading Bot API (NOWY - opcjonalny)
+  - hostname: api.twojadomena-n8n.pl
+    service: http://localhost:8000
+  
+  # Catch-all (musi być ostatni)
+  - service: http_status:404

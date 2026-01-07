@@ -1,0 +1,18 @@
+tunnel: TWÓJ_ID_TUNELU
+credentials-file: /home/TWOJA_NAZWA_UŻYTKOWNIKA/.cloudflared/TWÓJ_ID_TUNELU.json
+
+ingress:
+  # Wszystko idzie przez nginx (który routuje wewnętrznie)
+  - hostname: twojadomena-n8n.pl
+    service: http://localhost:8443
+  
+  # Catch-all
+  - service: http_status:404
+
+# ============================================
+# ROUTING (przez nginx):
+# ============================================
+# https://twojadomena-n8n.pl/          → n8n
+# https://twojadomena-n8n.pl/trading   → Trading Dashboard
+# https://twojadomena-n8n.pl/api       → Trading API
+# https://twojadomena-n8n.pl/webhook   → n8n webhooks
