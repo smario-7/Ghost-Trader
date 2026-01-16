@@ -224,10 +224,32 @@ class NewsService:
         # Filtruj po symbolu jeśli podano
         if symbol:
             symbol_keywords = {
-                "BTC": ["bitcoin", "btc", "crypto"],
-                "ETH": ["ethereum", "eth", "crypto"],
-                "AAPL": ["apple", "aapl"],
-                "TSLA": ["tesla", "tsla", "elon"]
+                # Pary walutowe (Forex)
+                "EUR": ["eur", "euro", "euro/usd", "eurusd", "eur usd"],
+                "GBP": ["gbp", "british pound", "pound", "gbp/usd", "gbpusd", "gbp usd", "sterling"],
+                "JPY": ["jpy", "japanese yen", "yen", "usd/jpy", "usdjpy", "usd jpy"],
+                "CHF": ["chf", "swiss franc", "franc", "usd/chf", "usdchf", "usd chf"],
+                "AUD": ["aud", "australian dollar", "aussie", "aud/usd", "audusd", "aud usd"],
+                "NZD": ["nzd", "new zealand dollar", "kiwi", "nzd/usd", "nzdusd", "nzd usd"],
+                "CAD": ["cad", "canadian dollar", "loonie", "usd/cad", "usdcad", "usd cad"],
+                # Indeksy USA
+                "SPX": ["spx", "s&p 500", "s&p500", "sp500", "standard & poor", "s and p 500"],
+                "DJI": ["dji", "dow jones", "dow", "dow jones industrial average", "djia"],
+                "IXIC": ["ixic", "nasdaq", "nasdaq composite", "nasdaq index"],
+                "RUT": ["rut", "russell 2000", "russell", "russell index"],
+                # Akcje USA
+                "AAPL": ["apple", "aapl", "apple inc", "apple stock"],
+                "MSFT": ["microsoft", "msft", "microsoft corp", "microsoft stock"],
+                "GOOGL": ["google", "googl", "alphabet", "alphabet inc", "google stock"],
+                "AMZN": ["amazon", "amzn", "amazon.com", "amazon stock"],
+                "TSLA": ["tesla", "tsla", "elon", "tesla motors", "tesla stock"],
+                "META": ["meta", "facebook", "fb", "meta platforms", "meta stock"],
+                "NVDA": ["nvidia", "nvda", "nvidia corp", "nvidia stock"],
+                # Metale szlachetne
+                "XAU": ["gold", "złoto", "xau", "xau/usd", "gold price", "gold market"],
+                "XAG": ["silver", "srebro", "xag", "xag/usd", "silver price", "silver market"],
+                "XPT": ["platinum", "platyna", "xpt", "xpt/usd", "platinum price"],
+                "XPD": ["palladium", "pallad", "xpd", "xpd/usd", "palladium price"]
             }
             
             keywords = symbol_keywords.get(symbol, [symbol.lower()])
@@ -244,7 +266,7 @@ class NewsService:
     
     async def get_crypto_news(
         self,
-        symbol: str = "BTC",
+        symbol: str = "EUR",
         limit: int = 10
     ) -> List[Dict[str, Any]]:
         """
@@ -440,7 +462,7 @@ if __name__ == "__main__":
         # News
         print("\n=== FINANCIAL NEWS ===")
         news_service = NewsService()
-        news = await news_service.get_financial_news(symbol="BTC", limit=5)
+        news = await news_service.get_financial_news(symbol="EUR", limit=5)
         for article in news:
             print(f"\n{article['title']}")
             print(f"Source: {article['source']}")

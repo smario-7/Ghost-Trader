@@ -1,24 +1,59 @@
 # ===== KRYTYCZNE - NIE COMMITUJ! =====
+# Zmienne środowiskowe i sekrety
 .env
+.env.local
+.env.*.local
+*.secret
+*.secrets
+*_secret.*
+*_secrets.*
+credentials.json
+token.json
+*.token
+
+# Bazy danych
 *.db
+*.sqlite
+*.sqlite3
 *.db-journal
+*.db-shm
+*.db-wal
 
 # Logi
 *.log
 logs/
+*.log.*
 
 # Backupy
 backups/
+*.backup
+*.bak
+*~
 
 # Data directory
 data/
+*.csv
+*.xlsx
+*.xls
+
+# Pliki robocze i notatki
+ETAP*_SUMMARY.md
+CLAUDE.md
+TODO.md
+NOTES.md
+scratch/
+temp/
+tmp/
 
 # ===== Python =====
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -31,44 +66,357 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Virtual environments
 venv/
 env/
 ENV/
 .venv
+.env/
+env.bak/
+venv.bak/
 
-# IDE
-.vscode/
+# Conda environments
+.conda/
+*.conda
+
+# IDE - VSCode (zachowaj settings.json dla środowiska)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.vscode-test/
+*.code-workspace
+
+# IDE - Cursor (zachowaj ustawienia środowiska)
+.cursor/*
+!.cursor/settings.json
+.cursorrules
+cursor-plans/
+.cursor/debug.log
+
+# Claude Code (zachowaj ustawienia środowiska)
+.claude/*
+!.claude/settings.json
+!.claude/settings.local.json
+.claude/cache/
+.claude/logs/
+
+# IDE - IntelliJ / PyCharm
 .idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Vim / Emacs
 *.swp
 *.swo
 *~
+.#*
+\#*#
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# Windows
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Docker
 *.pid
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+docker-data/
+*.dockerignore.local
+.dockerignore.local
 
-# Pytest
+# Docker volumes i cache
+.docker-cache/
+docker-volumes/
+
+# Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
 
-# Jupyter
+# Jupyter Notebook
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version.local
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pyright
+pyrightconfig.json
 
 # Temporary files
 *.tmp
-*.bak
-*.backup
+*.temp
+*_temp.*
+*_tmp.*
 
-# Certificates (jeśli używasz)
+# Certificates i klucze
 *.pem
 *.key
 *.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.ppk
+
+# ===== TRADING BOT SPECIFIC =====
+# Trading data i cache
+*.pickle
+*.pkl
+*.joblib
+market_data/
+historical_data/
+cache/
+.cache/
+
+# AI/ML models
+*.h5
+*.hdf5
+*.model
+*.pt
+*.pth
+*.onnx
+models/
+checkpoints/
+
+# Monitoring i metryki
+*.rrd
+*.rdb
+monitoring/
+metrics/
+
+# Telegram bot cache
+telegram_cache/
+bot_cache/
+
+# API keys i tokens (dodatkowe wzorce)
+*api_key*
+*apikey*
+*api-key*
+*secret_key*
+*secretkey*
+*access_token*
+*refresh_token*
+
+# Konfiguracje lokalne
+config.local.*
+*.local.json
+*.local.yml
+*.local.yaml
+local_settings.py
+settings.local.py
+
+# Pliki użytkownika
+user_data/
+users/
+sessions/
+
+# ===== DEPLOYMENT =====
+# Nginx/Apache
+*.pid
+*.sock
+access.log
+error.log
+
+# SSL/TLS
+*.csr
+*.srl
+*.ca-bundle
+
+# Cloudflare
+cloudflared.log
+.cloudflared/
+
+# Systemd
+*.service.local
+
+# ===== DEVELOPMENT =====
+# Debug
+debug/
+debug.log
+*.debug
+
+# Profiling
+*.prof
+*.lprof
+*.pstats
+
+# Benchmarks
+benchmark/
+benchmarks/
+*.benchmark
+
+# Experiments
+experiments/
+exp/
+sandbox/
+
+# ===== DOCUMENTATION (wygenerowana) =====
+# Sphinx documentation
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# MkDocs
+/site/
+
+# ===== PACKAGE MANAGERS =====
+# npm (jeśli używasz frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Poetry
+poetry.lock
+
+# Pipenv
+Pipfile.lock
+
+# ===== SECURITY SCANNERS =====
+# Bandit
+.bandit
+bandit-report.*
+
+# Safety
+safety-report.*
+
+# Trivy
+trivy-report.*
+
+# ===== BACKUP I ARCHIWUM =====
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.bz2
+*.gz
+*.iso
+*.jar
+*.war
+*.ear
+*.sar
+*.class
+
+# Archiwum baz danych
+*.sql.gz
+*.dump
+*.dmp
+
+# ===== INNE =====
+# Core dumps
+core
+core.*
+*.core
+
+# Crash logs
+crash.log
+*.crash
+*.stackdump
+
+# Lock files
+*.lock
+.lock-*
+
+# PID files
+*.pid
+pids/
+
+# Sockets
+*.sock
+*.socket

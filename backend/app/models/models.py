@@ -28,7 +28,7 @@ class StrategyBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Nazwa strategii")
     strategy_type: StrategyType = Field(..., description="Typ strategii")
     parameters: Dict[str, Any] = Field(..., description="Parametry strategii")
-    symbol: str = Field(..., min_length=1, max_length=20, description="Symbol (np. BTC/USDT)")
+    symbol: str = Field(..., min_length=1, max_length=20, description="Symbol (np. EUR/USD)")
     timeframe: str = Field(default="1h", description="Interwał czasowy")
     is_active: bool = Field(default=True, description="Czy strategia jest aktywna")
     
@@ -37,7 +37,7 @@ class StrategyBase(BaseModel):
         """Walidacja symbolu"""
         v = v.upper().strip()
         if '/' not in v:
-            raise ValueError('Symbol musi zawierać "/" (np. BTC/USDT)')
+            raise ValueError('Symbol musi zawierać "/" (np. EUR/USD)')
         parts = v.split('/')
         if len(parts) != 2:
             raise ValueError('Nieprawidłowy format symbolu')
@@ -135,6 +135,9 @@ class SignalResponse(BaseModel):
     symbol: str
     indicator_values: Dict[str, Any]
     message: Optional[str]
+    ai_analysis_id: Optional[int] = Field(None, description="ID powiązanej analizy AI")
+    agreement_score: Optional[int] = Field(None, ge=0, le=100, description="Scoring zgodności")
+    decision_reason: Optional[str] = Field(None, description="Uzasadnienie decyzji")
     created_at: datetime
     
     class Config:
@@ -206,6 +209,81 @@ class StatisticsResponse(BaseModel):
     uptime: str
 
 
+class AIAnalysisResult(BaseModel):
+    """Model wyniku analizy AI"""
+    id: Optional[int] = None
+    symbol: str = Field(..., description="Symbol (np. EUR/USD)")
+    timeframe: str = Field(..., description="Interwał czasowy")
+    timestamp: Optional[datetime] = None
+    
+    ai_recommendation: Optional[str] = Field(None, description="Rekomendacja AI (BUY/SELL/HOLD)")
+    ai_confidence: Optional[int] = Field(None, ge=0, le=100, description="Pewność AI (0-100)")
+    ai_reasoning: Optional[str] = Field(None, description="Uzasadnienie AI")
+    
+    technical_signal: Optional[str] = Field(None, description="Sygnał techniczny")
+    technical_confidence: Optional[int] = Field(None, ge=0, le=100, description="Pewność wskaźników")
+    technical_details: Optional[str] = Field(None, description="Szczegóły wskaźników (JSON)")
+    
+    macro_signal: Optional[str] = Field(None, description="Sygnał makro")
+    macro_impact: Optional[str] = Field(None, description="Wpływ makro")
+    
+    news_sentiment: Optional[str] = Field(None, description="Sentiment newsów")
+    news_score: Optional[int] = Field(None, ge=0, le=100, description="Scoring newsów")
+    
+    final_signal: Optional[str] = Field(None, description="Finalny sygnał (BUY/SELL/HOLD/NO_SIGNAL)")
+    agreement_score: Optional[int] = Field(None, ge=0, le=100, description="Scoring zgodności (%)")
+    voting_details: Optional[str] = Field(None, description="Szczegóły głosowania (JSON)")
+    
+    tokens_used: Optional[int] = Field(None, ge=0, description="Użyte tokeny OpenAI")
+    estimated_cost: Optional[float] = Field(None, ge=0, description="Szacowany koszt ($)")
+    
+    decision_reason: Optional[str] = Field(None, description="Uzasadnienie decyzji")
+    created_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class AnalysisConfig(BaseModel):
+    """Model konfiguracji analiz"""
+    id: Optional[int] = None
+    analysis_interval: int = Field(
+        default=15,
+        ge=5,
+        le=1440,
+        description="Interwał analiz (minuty)"
+    )
+    enabled_symbols: Optional[List[str]] = Field(
+        default_factory=list,
+        description="Lista włączonych symboli"
+    )
+    notification_threshold: int = Field(
+        default=60,
+        ge=0,
+        le=100,
+        description="Próg powiadomień (min agreement_score)"
+    )
+    is_active: bool = Field(default=True, description="Czy automatyczne analizy są włączone")
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class TokenStatistics(BaseModel):
+    """Model statystyk tokenów OpenAI"""
+    total_tokens: int = Field(default=0, description="Łączna liczba tokenów")
+    total_cost: float = Field(default=0.0, description="Łączny koszt ($)")
+    analyses_count: int = Field(default=0, description="Liczba analiz")
+    avg_tokens_per_analysis: int = Field(default=0, description="Średnia tokenów/analiza")
+    today_tokens: int = Field(default=0, description="Tokeny dzisiaj")
+    today_cost: float = Field(default=0.0, description="Koszt dzisiaj ($)")
+    today_analyses: int = Field(default=0, description="Analiz dzisiaj")
+    
+    class Config:
+        from_attributes = True
+
+
 # Presety strategii
 class StrategyPresets:
     """Gotowe presety strategii"""
@@ -262,3 +340,94 @@ class StrategyPresets:
             cls.MACD_DEFAULT,
             cls.BOLLINGER_DEFAULT
         ]
+
+
+# ===== ETAP 5: Nowe modele dla API =====
+
+class AnalysisResultsFilter(BaseModel):
+    """Filtry dla wyników analiz AI"""
+    symbol: Optional[str] = Field(None, description="Filtruj po symbolu (np. EUR/USD)")
+    limit: int = Field(default=50, ge=1, le=200, description="Maksymalna liczba wyników")
+    signal_type: Optional[str] = Field(
+        None,
+        description="Filtruj po typie sygnału (BUY/SELL/HOLD/NO_SIGNAL)"
+    )
+    min_agreement: Optional[int] = Field(
+        None,
+        ge=0,
+        le=100,
+        description="Minimalny agreement_score (0-100)"
+    )
+    
+    @validator('signal_type')
+    def validate_signal_type(cls, v):
+        """Walidacja typu sygnału"""
+        if v is not None:
+            valid_types = ['BUY', 'SELL', 'HOLD', 'NO_SIGNAL']
+            if v not in valid_types:
+                raise ValueError(f'signal_type musi być jednym z: {valid_types}')
+        return v
+
+
+class AnalysisConfigUpdate(BaseModel):
+    """Model do aktualizacji konfiguracji analiz"""
+    analysis_interval: Optional[int] = Field(
+        None,
+        ge=5,
+        le=1440,
+        description="Interwał analiz w minutach (5-1440)"
+    )
+    enabled_symbols: Optional[List[str]] = Field(
+        None,
+        max_items=50,
+        description="Lista włączonych symboli (max 50)"
+    )
+    notification_threshold: Optional[int] = Field(
+        None,
+        ge=0,
+        le=100,
+        description="Próg powiadomień (0-100%)"
+    )
+    is_active: Optional[bool] = Field(
+        None,
+        description="Czy automatyczne analizy są włączone"
+    )
+    
+    @validator('enabled_symbols')
+    def validate_symbols(cls, v):
+        """Walidacja listy symboli"""
+        if v is not None:
+            for symbol in v:
+                if '/' not in symbol:
+                    raise ValueError(f'Symbol {symbol} musi zawierać "/" (np. EUR/USD)')
+        return v
+
+
+class TriggerAnalysisRequest(BaseModel):
+    """Request do ręcznego uruchomienia analiz"""
+    symbols: Optional[List[str]] = Field(
+        None,
+        max_items=50,
+        description="Lista symboli do analizy (max 50)"
+    )
+    timeframe: str = Field(
+        default="1h",
+        description="Interwał czasowy (1m, 5m, 15m, 30m, 1h, 4h, 1d)"
+    )
+    
+    @validator('symbols')
+    def validate_symbols(cls, v):
+        """Walidacja listy symboli"""
+        if v is not None:
+            for symbol in v:
+                if '/' not in symbol:
+                    raise ValueError(f'Symbol {symbol} musi zawierać "/" (np. EUR/USD)')
+        return v
+    
+    @validator('timeframe')
+    def validate_timeframe(cls, v):
+        """Walidacja timeframe"""
+        valid_timeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d']
+        if v not in valid_timeframes:
+            raise ValueError(f'Timeframe musi być jednym z: {valid_timeframes}')
+        return v

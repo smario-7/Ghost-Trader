@@ -1,0 +1,179 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  KONFIGURACJA ŚRODOWISKA CONDA GHOST-TRADER                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📦 ŚRODOWISKO: ghost-trader
+🐍 PYTHON: 3.11.13
+📍 LOKALIZACJA: /home/mario/miniconda3/envs/ghost-trader
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         PLIKI KONFIGURACYJNE                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ .envrc
+   → Automatyczna aktywacja środowiska przez direnv
+   → Aktywuje conda ghost-trader przy wejściu do katalogu
+
+✅ .vscode/settings.json
+   → Konfiguracja interpretera Python dla VS Code/Cursor
+   → Ścieżka: /home/mario/miniconda3/envs/ghost-trader/bin/python
+   → Automatyczna aktywacja w terminalu IDE
+
+✅ .claude/settings.local.json
+   → Uprawnienia dla poleceń conda
+   → Zmienne środowiskowe CONDA_DEFAULT_ENV i CONDA_PREFIX
+
+✅ .python-version
+   → Wersja Python 3.11.13 dla narzędzi typu pyenv
+
+✅ environment.yml
+   → Definicja środowiska conda
+   → Wszystkie zależności z requirements.txt
+
+✅ activate.sh
+   → Skrypt aktywacji z automatycznym tworzeniem środowiska
+   → Sprawdza czy środowisko istnieje i tworzy je jeśli nie
+
+✅ .editorconfig
+   → Ustawienia formatowania dla różnych edytorów
+   → Spójne wcięcia i kodowanie
+
+✅ .gitattributes
+   → Normalizacja zakończeń linii w git
+   → Obsługa plików binarnych
+
+✅ Makefile
+   → Łatwe komendy do zarządzania projektem
+   → make setup, make install, make test, etc.
+
+✅ CONDA_SETUP.md
+   → Pełna dokumentacja konfiguracji środowiska
+   → Instrukcje instalacji i rozwiązywania problemów
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      ZMIANY W .gitignore                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ Usunięto ignorowanie:
+   - .envrc (teraz commitowany)
+   - activate.sh (teraz commitowany)
+   - .vscode/settings.json (teraz commitowany)
+   - .claude/settings.json i settings.local.json (teraz commitowane)
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    JAK UŻYWAĆ ŚRODOWISKA                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🔧 OPCJA 1: Automatyczna aktywacja przez direnv (ZALECANE)
+   
+   1. Zainstaluj direnv:
+      Ubuntu/Debian: sudo apt install direnv
+      macOS: brew install direnv
+   
+   2. Dodaj do ~/.bashrc:
+      echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+      source ~/.bashrc
+   
+   3. W katalogu projektu:
+      direnv allow
+   
+   ✨ Od teraz środowisko aktywuje się automatycznie!
+
+🔧 OPCJA 2: Ręczna aktywacja przez skrypt
+   
+   source activate.sh
+   
+   Skrypt automatycznie:
+   - Sprawdzi czy conda jest zainstalowana
+   - Utworzy środowisko jeśli nie istnieje
+   - Aktywuje środowisko
+
+🔧 OPCJA 3: Standardowa aktywacja conda
+   
+   conda activate ghost-trader
+
+🔧 OPCJA 4: Przez Makefile
+   
+   make activate  # Pokaże instrukcje
+   make setup     # Utworzy środowisko
+   make install   # Zainstaluje zależności
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         WERYFIKACJA                                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Sprawdź czy wszystko działa:
+
+1. Aktywuj środowisko:
+   source activate.sh
+
+2. Sprawdź wersję Python:
+   python --version
+   → Powinno pokazać: Python 3.11.13
+
+3. Sprawdź ścieżkę:
+   which python
+   → Powinno pokazać: /home/mario/miniconda3/envs/ghost-trader/bin/python
+
+4. Sprawdź pakiety:
+   pip list
+   → Powinny być wszystkie z requirements.txt
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    PRZYDATNE KOMENDY                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+# Pokaż wszystkie środowiska
+conda env list
+
+# Zaktualizuj środowisko
+conda env update -f environment.yml --prune
+
+# Eksportuj środowisko
+conda env export > environment.yml
+
+# Usuń środowisko
+conda env remove -n ghost-trader
+
+# Zainstaluj nowy pakiet
+conda activate ghost-trader
+pip install nazwa-pakietu
+pip freeze > backend/requirements.txt
+
+# Wyczyść cache
+make clean
+
+# Uruchom testy
+make test
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      INTEGRACJA Z IDE                                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+VS Code / Cursor:
+✅ Automatycznie używa środowiska ghost-trader
+✅ Terminal automatycznie aktywuje środowisko
+✅ IntelliSense i autouzupełnianie działa
+✅ Debugger używa właściwego interpretera
+
+PyCharm:
+1. File → Settings → Project → Python Interpreter
+2. Add Interpreter → Conda Environment
+3. Wybierz: Existing environment
+4. Ścieżka: /home/mario/miniconda3/envs/ghost-trader/bin/python
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         DOKUMENTACJA                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📚 Szczegółowa dokumentacja: CONDA_SETUP.md
+📋 Szybki start: README.md
+🔧 Komendy make: make help
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          GOTOWE! 🎉                                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Projekt Ghost-Trader jest teraz w pełni skonfigurowany do używania
+środowiska conda ghost-trader. Wszystkie narzędzia i IDE będą automatycznie
+używać właściwego środowiska Python.

@@ -33,7 +33,13 @@ class AIAnalysisService:
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o")
         
         self.logger = logging.getLogger("trading_bot.ai")
-        self.logger.info(f"AI Service initialized with model: {self.model}")
+        
+        # Loguj status klucza API (bez ujawniania całego klucza)
+        if self.api_key:
+            key_preview = f"{self.api_key[:10]}...{self.api_key[-4:]}" if len(self.api_key) > 14 else "***"
+            self.logger.info(f"✅ AI Service initialized with model: {self.model}, API key: {key_preview}")
+        else:
+            self.logger.warning(f"⚠️ AI Service initialized WITHOUT API key - funkcje AI nie będą działać!")
     
     async def analyze_macro_data(
         self,
@@ -46,7 +52,7 @@ class AIAnalysisService:
         Kompleksowa analiza łącząca dane makro, news i wskaźniki techniczne
         
         Args:
-            symbol: Symbol (np. BTC/USDT)
+            symbol: Symbol (np. EUR/USD)
             macro_data: Dane makroekonomiczne
             news: Lista wiadomości
             technical_indicators: Wskaźniki techniczne
@@ -420,7 +426,7 @@ if __name__ == "__main__":
         
         # Analiza
         result = await service.analyze_macro_data(
-            symbol="BTC/USDT",
+            symbol="EUR/USD",
             macro_data=macro_data,
             news=news,
             technical_indicators=technical_indicators

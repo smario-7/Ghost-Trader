@@ -251,7 +251,7 @@ if __name__ == "__main__":
     trading_logger.log_signal(
         signal_type="BUY",
         strategy_name="RSI Conservative",
-        symbol="BTC/USDT",
+        symbol="EUR/USD",
         price=45000.00,
         indicator_values={'rsi': 25, 'price': 45000}
     )

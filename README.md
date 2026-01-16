@@ -8,6 +8,7 @@
 - [Konfiguracja](#konfiguracja)
 - [Uruchomienie](#uruchomienie)
 - [API](#api)
+- [AI Signal Integration](#ai-signal-integration)
 - [Bezpieczeństwo](#bezpieczeństwo)
 - [Troubleshooting](#troubleshooting)
 
@@ -56,11 +57,15 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 ## 📦 Wymagania
 
 ### Minimalne
-- **Python**: 3.11+
-- **Docker**: 20.10+ (opcjonalnie)
+- **Python**: 3.11.13 (zarządzany przez conda)
+- **Conda**: Miniconda lub Anaconda
+- **Docker**: 20.10+ (opcjonalnie, dla produkcji)
 - **Docker Compose**: 2.0+ (opcjonalnie)
 - **RAM**: 512MB (Raspberry Pi compatible!)
 - **Dysk**: 1GB
+
+> 💡 **Środowisko conda**: Projekt używa środowiska conda `ghost-trader` z Python 3.11.13.
+> Zobacz [CONDA_SETUP.md](CONDA_SETUP.md) dla szczegółów konfiguracji.
 
 ### Raspberry Pi 4
 - ✅ **Kompatybilny** z ARM64
@@ -92,7 +97,47 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-### Metoda 2: Bezpośrednio (development)
+### Metoda 2: Conda (zalecana dla development)
+
+```bash
+# 1. Sklonuj projekt
+git clone <repo-url> trading-bot
+cd trading-bot
+
+# 2. Utwórz środowisko conda
+conda env create -f environment.yml
+
+# 3. Aktywuj środowisko
+conda activate ghost-trader
+# LUB użyj skryptu:
+source activate.sh
+
+# 4. Skopiuj i edytuj .env
+cp .env.example .env
+nano .env
+
+# 5. Uruchom backend
+cd backend
+python -m app.main
+```
+
+**Automatyczna aktywacja środowiska:**
+```bash
+# Zainstaluj direnv
+sudo apt install direnv  # Ubuntu/Debian
+brew install direnv      # macOS
+
+# Dodaj do ~/.bashrc
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Zezwól na automatyczną aktywację
+direnv allow
+
+# Od teraz środowisko aktywuje się automatycznie!
+```
+
+### Metoda 3: Bezpośrednio z venv (alternatywa)
 
 ```bash
 # 1. Utwórz venv
@@ -269,6 +314,60 @@ curl -X POST http://localhost:8000/test-telegram \
 Po uruchomieniu (tylko development):
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+
+## 🤖 AI Signal Integration
+
+System **AI Signal Integration** łączy 4 źródła analiz (AI, Technical, Macro, News) w jeden sygnał tradingowy używając głosowania większościowego.
+
+### Kluczowe cechy
+
+- **Głosowanie większościowe** - sygnał tylko gdy >= 60% źródeł się zgadza
+- **Automatyczne analizy** - konfigurowalne interwały (5-1440 minut)
+- **Wszystkie symbole** - forex, indeksy, akcje, metale
+- **Monitoring kosztów** - śledzenie tokenów OpenAI
+- **Dashboard** - wizualizacja wyników wszystkich analiz
+
+### Quick Start
+
+```bash
+# 1. Dodaj do .env
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
+ANALYSIS_INTERVAL=30
+NOTIFICATION_THRESHOLD=60
+
+# 2. Uruchom
+docker-compose up -d
+
+# 3. Sprawdź wyniki w dashboard
+http://localhost:8080
+
+# 4. Lub przez API
+curl -H "X-API-Key: $API_KEY" \
+  "http://localhost:8000/ai/analysis-results"
+```
+
+### Dokumentacja
+
+**📖 Pełna dokumentacja: [docs/AI_SIGNAL_INTEGRATION.md](docs/AI_SIGNAL_INTEGRATION.md)**
+
+Kompleksowy przewodnik zawierający:
+- 📊 Szczegółowy opis architektury i algorytmu głosowania większościowego
+- 🔌 Wszystkie API endpoints z przykładami użycia
+- ⚙️ Konfigurację i zmienne środowiskowe
+- 💰 Szczegółowe szacunki kosztów OpenAI
+- 🎯 Best practices i optymalizację
+- 🔧 Troubleshooting i rozwiązywanie problemów
+- 🧪 Testy i przykłady kodu
+
+### Koszty OpenAI
+
+| Model | Koszt/analiza | 10 symboli (30 min) |
+|-------|---------------|---------------------|
+| GPT-4o | $0.025 | $360/miesiąc |
+| GPT-4o-mini | $0.0025 | $36/miesiąc |
+
+**Rekomendacja:** Użyj GPT-4o-mini (10x taniej, nadal bardzo dobra jakość)
 
 ## 🔒 Bezpieczeństwo
 

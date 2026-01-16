@@ -3,7 +3,7 @@ Konfiguracja aplikacji - wszystkie zmienne środowiskowe
 """
 from pydantic_settings import BaseSettings
 from pydantic import Field, validator
-from typing import List, Optional
+from typing import List, Optional, Dict
 import os
 
 
@@ -14,8 +14,11 @@ class Settings(BaseSettings):
     telegram_bot_token: str = Field(..., description="Token bota z @BotFather")
     telegram_chat_id: str = Field(..., description="ID czatu dla powiadomień")
     
-    # OpenAI API
-    openai_api_key: str = Field(..., description="Klucz OpenAI API")
+    # OpenAI API (opcjonalne - tylko dla funkcji AI)
+    openai_api_key: Optional[str] = Field(
+        default=None,
+        description="Klucz OpenAI API (opcjonalne - tylko dla funkcji AI)"
+    )
     openai_model: str = Field(
         default="gpt-4o",
         description="Model OpenAI (gpt-4o, gpt-4-turbo, gpt-3.5-turbo)"
@@ -76,6 +79,70 @@ class Settings(BaseSettings):
         description="Interwał healthcheck (sekundy)"
     )
     
+    # Signal Aggregator - wagi dla źródeł analiz (suma musi wynosić 100)
+    aggregator_weight_ai: int = Field(
+        default=40,
+        ge=0,
+        le=100,
+        description="Waga dla AI analysis (0-100)"
+    )
+    aggregator_weight_technical: int = Field(
+        default=30,
+        ge=0,
+        le=100,
+        description="Waga dla technical indicators (0-100)"
+    )
+    aggregator_weight_macro: int = Field(
+        default=20,
+        ge=0,
+        le=100,
+        description="Waga dla macro data (0-100)"
+    )
+    aggregator_weight_news: int = Field(
+        default=10,
+        ge=0,
+        le=100,
+        description="Waga dla news sentiment (0-100)"
+    )
+    
+    # Próg zgodności dla powiadomień
+    notification_threshold: int = Field(
+        default=60,
+        ge=0,
+        le=100,
+        description="Minimalny agreement_score do wysłania powiadomienia (%)"
+    )
+    
+    # Automatyczne analizy AI (Etap 4)
+    analysis_interval: int = Field(
+        default=30,
+        ge=5,
+        le=1440,
+        description="Interwał automatycznych analiz AI (minuty)"
+    )
+    analysis_enabled: bool = Field(
+        default=True,
+        description="Czy automatyczne analizy AI są włączone"
+    )
+    analysis_symbols_limit: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maksymalna liczba symboli do analizy"
+    )
+    analysis_timeout: int = Field(
+        default=60,
+        ge=30,
+        le=300,
+        description="Timeout dla pojedynczej analizy (sekundy)"
+    )
+    analysis_pause_between_symbols: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description="Pauza między analizami symboli (sekundy)"
+    )
+    
     @validator('log_level')
     def validate_log_level(cls, v):
         """Walidacja poziomu logów"""
@@ -124,11 +191,31 @@ class Settings(BaseSettings):
     
     @validator('openai_api_key')
     def validate_openai_key(cls, v):
-        """Walidacja klucza OpenAI"""
+        """Walidacja klucza OpenAI (opcjonalne)"""
+        if v is None or v == '':
+            return None
         if not v.startswith('sk-'):
             raise ValueError('openai_api_key musi zaczynać się od "sk-"')
         if len(v) < 20:
             raise ValueError('openai_api_key jest nieprawidłowy (za krótki)')
+        return v
+    
+    @validator('aggregator_weight_news')
+    def validate_weights_sum(cls, v, values):
+        """Sprawdza czy suma wag dla agregacji wynosi 100"""
+        ai_weight = values.get('aggregator_weight_ai', 40)
+        tech_weight = values.get('aggregator_weight_technical', 30)
+        macro_weight = values.get('aggregator_weight_macro', 20)
+        news_weight = v
+        
+        total = ai_weight + tech_weight + macro_weight + news_weight
+        
+        if total != 100:
+            raise ValueError(
+                f'Suma wag dla agregacji musi wynosić 100, obecnie: {total}. '
+                f'AI={ai_weight}, Technical={tech_weight}, Macro={macro_weight}, News={news_weight}'
+            )
+        
         return v
     
     def get_cors_origins_list(self) -> List[str]:
@@ -142,6 +229,15 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Sprawdza czy środowisko produkcyjne"""
         return self.environment == 'production'
+    
+    def get_aggregator_weights(self) -> Dict[str, int]:
+        """Zwraca wagi dla signal aggregator jako słownik"""
+        return {
+            "ai": self.aggregator_weight_ai,
+            "technical": self.aggregator_weight_technical,
+            "macro": self.aggregator_weight_macro,
+            "news": self.aggregator_weight_news
+        }
     
     class Config:
         env_file = '.env'

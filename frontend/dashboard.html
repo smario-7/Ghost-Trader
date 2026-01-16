@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" x-data="tradingBot()" x-init="init()">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -340,13 +340,454 @@
         .risk-dot.active.low {
             background: #10b981;
         }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        .table th {
+            background: #0f172a;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .table tr:hover {
+            background: #0f172a;
+        }
+
+        .activity-item {
+            background: #0f172a;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .activity-item.no-signal {
+            border-color: #475569;
+            opacity: 0.8;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            overflow: auto;
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            border: 1px solid #334155;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            color: #94a3b8;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .parameters-group {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .parameters-group label {
+            font-size: 13px;
+        }
+
+        .error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ef4444;
+        }
+
+        .success {
+            background: #14532d;
+            color: #86efac;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #10b981;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .stat-card-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-card-label {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .symbols-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .symbol-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .refresh-indicator {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-left: 10px;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Analysis Result Item */
+        .analysis-result-item {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .analysis-result-item:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .analysis-result-item.buy {
+            border-left: 4px solid #10b981;
+        }
+
+        .analysis-result-item.sell {
+            border-left: 4px solid #ef4444;
+        }
+
+        .analysis-result-item.hold {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .analysis-result-item.no_signal {
+            border-left: 4px solid #64748b;
+        }
+
+        /* Signal Badges */
+        .signal-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .signal-badge.buy {
+            background: #10b98120;
+            color: #10b981;
+        }
+
+        .signal-badge.sell {
+            background: #ef444420;
+            color: #ef4444;
+        }
+
+        .signal-badge.hold {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+
+        .signal-badge.no_signal {
+            background: #64748b20;
+            color: #94a3b8;
+        }
+
+        /* Agreement Badges */
+        .agreement-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .agreement-badge.high {
+            background: #10b98120;
+            color: #10b981;
+        }
+
+        .agreement-badge.medium {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+
+        .agreement-badge.low {
+            background: #ef444420;
+            color: #ef4444;
+        }
+
+        /* Vote Items */
+        .vote-item {
+            background: #0f172a;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .vote-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .vote-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .vote-confidence {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        /* Modal Large */
+        .modal-large {
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #334155;
+            margin-bottom: 20px;
+        }
+
+        .modal-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .modal-tab:hover {
+            color: #e2e8f0;
+        }
+
+        .modal-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        /* Symbols Selector */
+        .symbols-selector {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .symbols-groups {
+            margin-top: 15px;
+        }
+
+        .symbol-group {
+            margin-bottom: 20px;
+        }
+
+        .symbol-group h4 {
+            color: #f1f5f9;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .symbol-group label {
+            display: block;
+            padding: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-size: 13px;
+        }
+
+        .symbol-group label:hover {
+            background: #1e293b;
+        }
+
+        .symbol-group label input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        /* Scrollbar styling dla symbols-selector */
+        .symbols-selector::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .symbols-selector::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .symbols-selector::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .symbols-selector::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Refresh indicator animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .refresh-indicator {
+            animation: fadeIn 0.3s ease-in;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Trading Bot Dashboard</h1>
-            <p class="subtitle">AI-Powered Trading Signals | OpenAI GPT | Real-time Analysis</p>
+            <div>
+                <h1>🤖 Trading Bot Dashboard</h1>
+                <p class="subtitle">AI-Powered Trading Signals | OpenAI GPT | Real-time Analysis</p>
+            </div>
+            <div style="color: rgba(255, 255, 255, 0.8); font-size: 12px;" x-text="`Ostatnia aktualizacja: ${lastUpdate}`"></div>
+        </div>
+
+        <div x-show="errorMessage" x-text="errorMessage" class="error"></div>
+        <div x-show="successMessage" x-text="successMessage" class="success"></div>
+        
+        <!-- Komunikat o braku połączenia z backendem -->
+        <div x-show="backendWarning" class="card" style="background: #1e293b; border-left: 4px solid #f59e0b; border: 1px solid #f59e0b;">
+            <h2 style="color: #fbbf24; margin-bottom: 10px;">⚠️ Backend nie jest dostępny</h2>
+            <p style="color: #fde68a; margin-bottom: 15px;">
+                Nie można połączyć się z backendem.
+            </p>
+            <div style="color: #fde68a; font-size: 14px; margin-bottom: 15px;">
+                <strong style="color: #fbbf24;">Sprawdź:</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Czy backend jest uruchomiony? Sprawdź: <code style="background: #0f172a; color: #fbbf24;">docker-compose ps</code></li>
+                    <li>Jeśli nie działa, uruchom: <code style="background: #0f172a; color: #fbbf24;">docker-compose up -d</code></li>
+                    <li>Sprawdź logi: <code style="background: #0f172a; color: #fbbf24;">docker-compose logs backend</code></li>
+                </ul>
+            </div>
+            <button class="btn" @click="checkBackendConnection()" style="background: #f59e0b;">🔄 Sprawdź połączenie ponownie</button>
         </div>
 
         <div class="grid">
@@ -356,16 +797,14 @@
                 
                 <div class="model-selector">
                     <label for="model-select" style="display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">Wybierz model OpenAI:</label>
-                    <select id="model-select">
+                    <select id="model-select" x-model="aiModel" @change="updateModelInfo()">
                         <option value="gpt-4o">GPT-4o (Zalecany) - Najlepszy stosunek jakości do ceny</option>
                         <option value="gpt-4o-mini">GPT-4o Mini - Szybszy, tańszy</option>
                         <option value="gpt-4-turbo">GPT-4 Turbo - Głębsza analiza</option>
                         <option value="gpt-4">GPT-4 - Klasyczny</option>
                         <option value="gpt-3.5-turbo">GPT-3.5 Turbo - Ekonomiczny</option>
                     </select>
-                    <div class="model-info" id="model-info">
-                        <strong>GPT-4o:</strong> Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.
-                    </div>
+                    <div class="model-info" x-html="modelInfoText"></div>
                 </div>
 
                 <div class="stat">
@@ -375,15 +814,15 @@
 
                 <div class="stat">
                     <span class="stat-label">Ostatnia analiza</span>
-                    <span class="stat-value" id="last-analysis">-</span>
+                    <span class="stat-value" x-text="lastAnalysis"></span>
                 </div>
 
                 <div class="stat">
                     <span class="stat-label">API Calls dziś</span>
-                    <span class="stat-value" id="api-calls">0</span>
+                    <span class="stat-value" x-text="apiCallsToday"></span>
                 </div>
 
-                <button class="btn" style="margin-top: 16px;" onclick="runAIAnalysis()">
+                <button class="btn" style="margin-top: 16px;" @click="runAIAnalysis()">
                     🧠 Uruchom analizę AI
                 </button>
             </div>
@@ -392,7 +831,7 @@
             <div class="card">
                 <h2>🎯 Aktualny Sygnał AI</h2>
                 
-                <div class="signal buy" id="current-signal">
+                <div class="signal buy">
                     <div class="signal-header">
                         <div class="signal-type buy">📈 BUY</div>
                         <div class="confidence high">Confidence: 78%</div>
@@ -503,38 +942,390 @@
                 </div>
             </div>
 
+            <!-- Informacje o Bot -->
+            <div class="card">
+                <h2>
+                    📊 Informacje o Bot
+                    <span class="refresh-indicator" x-text="refreshIndicators.stats"></span>
+                </h2>
+                <div x-show="loading.statistics" class="loading">Ładowanie...</div>
+                <template x-if="!loading.statistics && statistics">
+                    <div>
+                        <div class="stats-grid">
+                            <template x-for="stat in [
+                                {label: 'Wszystkie strategie', value: statistics.total_strategies || 0},
+                                {label: 'Aktywne strategie', value: statistics.active_strategies || 0},
+                                {label: 'Sygnały dzisiaj', value: statistics.signals_today || 0},
+                                {label: 'Wszystkie sygnały', value: statistics.total_signals || 0},
+                                {label: 'Sygnały BUY', value: statistics.buy_signals || 0},
+                                {label: 'Sygnały SELL', value: statistics.sell_signals || 0}
+                            ]" :key="stat.label">
+                                <div class="stat-card">
+                                    <div class="stat-card-value" x-text="stat.value"></div>
+                                    <div class="stat-card-label" x-text="stat.label"></div>
+                                </div>
+                            </template>
+                        </div>
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #334155;">
+                            <div class="stat">
+                                <span class="stat-label">Status schedulera</span>
+                                <span class="status-badge active">DZIAŁA</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Interwał sprawdzania</span>
+                                <span class="stat-value" x-text="`${checkInterval} minut`"></span>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <span class="stat-label">Sprawdzane walory:</span>
+                                <div class="symbols-list" style="margin-top: 10px;">
+                                    <template x-if="uniqueSymbols.length > 0">
+                                        <template x-for="symbol in uniqueSymbols" :key="symbol">
+                                            <span class="symbol-badge" x-text="symbol"></span>
+                                        </template>
+                                    </template>
+                                    <template x-if="uniqueSymbols.length === 0">
+                                        <span style="color: #94a3b8;">Brak aktywnych strategii</span>
+                                    </template>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; color: #94a3b8; font-size: 13px;">
+                                <strong style="color: #f1f5f9;">Typy danych sprawdzane:</strong> RSI, MACD, Bollinger Bands, Moving Average, Cena
+                            </div>
+                            <template x-if="statistics.last_signal_time">
+                                <div style="margin-top: 10px; color: #94a3b8; font-size: 13px;">
+                                    <strong style="color: #f1f5f9;">Ostatni sygnał:</strong> <span x-text="formatDate(statistics.last_signal_time)"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!loading.statistics && !statistics">
+                    <div class="error" x-text="errorMessage || 'Błąd ładowania danych'"></div>
+                </template>
+            </div>
+
             <!-- Aktywne strategie -->
             <div class="card">
-                <h2>📋 Aktywne Strategie</h2>
+                <h2>
+                    📋 Strategie Tradingowe
+                    <button class="btn btn-small" @click="openModal('add')" style="width: auto; padding: 8px 16px; font-size: 12px;">➕ Dodaj</button>
+                </h2>
+                <div x-show="loading.strategies" class="loading">Ładowanie...</div>
+                <template x-if="!loading.strategies && strategies.length === 0">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak strategii. Dodaj pierwszą strategię.</p>
+                </template>
+                <template x-if="!loading.strategies && strategies.length > 0">
+                    <template x-for="strategy in strategies" :key="strategy.id">
+                        <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div>
+                                    <strong style="color: #f1f5f9;" x-text="strategy.name"></strong>
+                                    <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="strategy.strategy_type"></span>
+                                </div>
+                                <span class="status-badge" :class="strategy.is_active ? 'active' : 'inactive'" x-text="strategy.is_active ? 'ACTIVE' : 'INACTIVE'"></span>
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+                                <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
+                                <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Ostatnie Sygnały -->
+            <div class="card">
+                <h2>
+                    🎯 Ostatnie Sygnały
+                    <span class="refresh-indicator" x-text="refreshIndicators.signals"></span>
+                </h2>
+                <div x-show="loading.signals" class="loading">Ładowanie...</div>
+                <template x-if="!loading.signals && signals.length === 0">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak sygnałów.</p>
+                </template>
+                <template x-if="!loading.signals && signals.length > 0">
+                    <template x-for="signal in signals" :key="signal.id">
+                        <div class="signal" :class="signal.signal_type.toLowerCase()">
+                            <div class="signal-header">
+                                <div class="signal-type" :class="signal.signal_type.toLowerCase()" x-text="signal.signal_type"></div>
+                                <span class="status-badge" :class="signal.signal_type === 'BUY' ? 'active' : signal.signal_type === 'SELL' ? 'inactive' : ''" x-text="signal.signal_type"></span>
+                            </div>
+                            <div class="signal-details">
+                                <p><strong>Strategia:</strong> <span x-text="signal.strategy_name"></span></p>
+                                <p><strong>Symbol:</strong> <span x-text="signal.symbol"></span> | <strong>Cena:</strong> $<span x-text="signal.price.toFixed(2)"></span></p>
+                                <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+                                    <strong>Data:</strong> <span x-text="formatDate(signal.created_at)"></span>
+                                </p>
+                                <template x-if="Object.keys(signal.indicator_values || {}).length > 0">
+                                    <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+                                        <strong>Wskaźniki:</strong> <span x-text="formatIndicators(signal.indicator_values)"></span>
+                                    </p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Aktywność Bota -->
+            <div class="card">
+                <h2>
+                    ⚡ Aktywność Bota
+                    <span class="refresh-indicator" x-text="refreshIndicators.activity"></span>
+                </h2>
+                <div x-show="loading.activity" class="loading">Ładowanie...</div>
+                <template x-if="!loading.activity && activity.length === 0">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak aktywności. Bot jeszcze nie sprawdził strategii.</p>
+                </template>
+                <template x-if="!loading.activity && activity.length > 0">
+                    <template x-for="result in activity" :key="result.strategy_id">
+                        <div class="activity-item" :class="(!result.signal || result.signal === 'HOLD') ? 'no-signal' : ''">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div>
+                                    <strong style="color: #f1f5f9;" x-text="result.strategy_name"></strong>
+                                    <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="result.symbol || 'N/A'"></span>
+                                </div>
+                                <template x-if="result.signal && result.signal !== 'HOLD'">
+                                    <span class="status-badge" :class="result.signal === 'BUY' ? 'active' : 'inactive'" x-text="result.signal"></span>
+                                </template>
+                                <template x-if="!result.signal || result.signal === 'HOLD'">
+                                    <span style="color: #94a3b8; font-size: 12px;">Brak sygnału (HOLD)</span>
+                                </template>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 13px;">
+                                Sprawdzono: przed chwilą
+                                <template x-if="result.indicators">
+                                    <span> | Wskaźniki: <span x-text="formatIndicators(result.indicators)"></span></span>
+                                </template>
+                            </div>
+                            <template x-if="result.message">
+                                <div style="margin-top: 5px; font-size: 12px; color: #94a3b8; font-style: italic;" x-text="result.message"></div>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Panel Wyników Analiz AI -->
+            <div class="card">
+                <h2>
+                    🤖 Wyniki Analiz AI
+                    <span class="refresh-indicator" x-text="refreshIndicators.aiAnalysis"></span>
+                </h2>
                 
-                <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="color: #f1f5f9;">RSI Conservative</strong>
-                        <span class="status-badge active">ACTIVE</span>
+                <!-- Filtry -->
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <select x-model="aiAnalysisFilter.symbol" @change="loadAIAnalysisResults()" style="flex: 1; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 8px; color: #e2e8f0;">
+                        <option value="">Wszystkie symbole</option>
+                        <template x-for="symbol in uniqueSymbols" :key="symbol">
+                            <option :value="symbol" x-text="symbol"></option>
+                        </template>
+                    </select>
+                    
+                    <select x-model="aiAnalysisFilter.signal" @change="loadAIAnalysisResults()" style="flex: 1; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 8px; color: #e2e8f0;">
+                        <option value="">Wszystkie sygnały</option>
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                        <option value="HOLD">HOLD</option>
+                        <option value="NO_SIGNAL">NO_SIGNAL</option>
+                    </select>
+                </div>
+                
+                <!-- Lista wyników -->
+                <div x-show="loading.aiAnalysis" class="loading">Ładowanie...</div>
+                
+                <template x-if="!loading.aiAnalysis && aiAnalysisResults.length === 0">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">
+                        Brak wyników analiz. Uruchom analizę ręcznie lub poczekaj na automatyczną.
+                    </p>
+                </template>
+                
+                <template x-if="!loading.aiAnalysis && aiAnalysisResults.length > 0">
+                    <div style="max-height: 600px; overflow-y: auto;">
+                        <template x-for="result in aiAnalysisResults" :key="result.id">
+                            <div class="analysis-result-item" 
+                                 :class="result.final_signal ? result.final_signal.toLowerCase() : ''"
+                                 @click="showAnalysisDetails(result.id)">
+                                
+                                <!-- Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #f1f5f9;" x-text="result.symbol"></strong>
+                                        <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" 
+                                              x-text="formatTimestamp(result.timestamp)"></span>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <span class="signal-badge" 
+                                              :class="result.final_signal ? result.final_signal.toLowerCase() : ''" 
+                                              x-text="result.final_signal || 'N/A'"></span>
+                                        <span class="agreement-badge" 
+                                              :class="getAgreementClass(result.agreement_score)"
+                                              x-text="(result.agreement_score || 0) + '%'"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Voting Details -->
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
+                                    <div class="vote-item">
+                                        <span class="vote-label">AI:</span>
+                                        <span class="vote-value" x-text="result.ai_recommendation || 'N/A'"></span>
+                                        <span class="vote-confidence" x-text="(result.ai_confidence || 0) + '%'"></span>
+                                    </div>
+                                    <div class="vote-item">
+                                        <span class="vote-label">Tech:</span>
+                                        <span class="vote-value" x-text="result.technical_signal || 'N/A'"></span>
+                                        <span class="vote-confidence" x-text="(result.technical_confidence || 0) + '%'"></span>
+                                    </div>
+                                    <div class="vote-item">
+                                        <span class="vote-label">Macro:</span>
+                                        <span class="vote-value" x-text="result.macro_signal || 'N/A'"></span>
+                                    </div>
+                                    <div class="vote-item">
+                                        <span class="vote-label">News:</span>
+                                        <span class="vote-value" x-text="result.news_sentiment || 'N/A'"></span>
+                                        <span class="vote-confidence" x-text="(result.news_score || 0) + '%'"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Decision Reason -->
+                                <div style="color: #94a3b8; font-size: 13px; font-style: italic;" 
+                                     x-text="result.decision_reason || 'Brak uzasadnienia'"></div>
+                            </div>
+                        </template>
                     </div>
-                    <div style="font-size: 12px; color: #94a3b8;">
-                        BTC/USDT | 1h | RSI(14) 30/70
+                </template>
+            </div>
+
+            <!-- Statystyki Tokenów OpenAI -->
+            <div class="card">
+                <h2>📊 Statystyki OpenAI</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" x-text="tokenStats.today_tokens || 0"></div>
+                        <div class="stat-card-label">Tokeny dzisiaj</div>
                     </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #cbd5e1;">
-                        Ostatni sygnał: <strong style="color: #10b981;">BUY</strong> 2h temu
+                    <div class="stat-card">
+                        <div class="stat-card-value" x-text="'$' + (tokenStats.today_cost || 0).toFixed(4)"></div>
+                        <div class="stat-card-label">Koszt dzisiaj</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" x-text="tokenStats.today_analyses || 0"></div>
+                        <div class="stat-card-label">Analiz dzisiaj</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" x-text="tokenStats.avg_tokens_per_analysis || 0"></div>
+                        <div class="stat-card-label">Średnio tokenów/analiza</div>
                     </div>
                 </div>
-
-                <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="color: #f1f5f9;">AI Strategy (GPT-4o)</strong>
-                        <span class="status-badge active">ACTIVE</span>
+                
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155;">
+                    <div style="display: flex; justify-content: space-between; color: #94a3b8; font-size: 13px;">
+                        <span>Łącznie tokenów:</span>
+                        <strong x-text="tokenStats.total_tokens || 0"></strong>
                     </div>
-                    <div style="font-size: 12px; color: #94a3b8;">
-                        BTC/USDT | 4h | Makro + News + Technical
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #cbd5e1;">
-                        Ostatni sygnał: <strong style="color: #10b981;">BUY</strong> 1h temu (78% confidence)
+                    <div style="display: flex; justify-content: space-between; color: #94a3b8; font-size: 13px; margin-top: 8px;">
+                        <span>Łączny koszt:</span>
+                        <strong x-text="'$' + (tokenStats.total_cost || 0).toFixed(4)"></strong>
                     </div>
                 </div>
+            </div>
 
-                <button class="btn" style="margin-top: 16px;">
-                    ➕ Dodaj nową strategię
+            <!-- Konfiguracja Automatycznych Analiz -->
+            <div class="card">
+                <h2>⚙️ Konfiguracja Analiz</h2>
+                
+                <div class="form-group">
+                    <label>Interwał analiz (minuty)</label>
+                    <select x-model="analysisConfig.interval" @change="updateAnalysisConfig()">
+                        <option value="5">5 minut</option>
+                        <option value="15">15 minut</option>
+                        <option value="30">30 minut</option>
+                        <option value="60">1 godzina</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Próg powiadomień (%)</label>
+                    <input type="number" 
+                           x-model.number="analysisConfig.notificationThreshold" 
+                           min="0" max="100" 
+                           @change="updateAnalysisConfig()">
+                    <small style="color: #94a3b8; font-size: 12px; display: block; margin-top: 5px;">
+                        Wyślij powiadomienie gdy zgodność >= tego progu
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Wybierz symbole do analizy</label>
+                    <div class="symbols-selector">
+                        <label style="display: block; margin-bottom: 10px; padding: 10px; background: #1e293b; border-radius: 6px;">
+                            <input type="checkbox" x-model="selectAllSymbols" @change="toggleAllSymbols()">
+                            <strong style="margin-left: 8px;">Wszystkie symbole</strong>
+                        </label>
+                        
+                        <div class="symbols-groups">
+                            <!-- Forex -->
+                            <div class="symbol-group">
+                                <h4>💱 Forex</h4>
+                                <template x-for="symbol in allSymbols.forex" :key="symbol">
+                                    <label>
+                                        <input type="checkbox" :value="symbol" x-model="selectedSymbols">
+                                        <span x-text="symbol"></span>
+                                    </label>
+                                </template>
+                            </div>
+                            
+                            <!-- Indeksy -->
+                            <div class="symbol-group">
+                                <h4>📈 Indeksy</h4>
+                                <template x-for="symbol in allSymbols.indices" :key="symbol">
+                                    <label>
+                                        <input type="checkbox" :value="symbol" x-model="selectedSymbols">
+                                        <span x-text="symbol"></span>
+                                    </label>
+                                </template>
+                            </div>
+                            
+                            <!-- Akcje -->
+                            <div class="symbol-group">
+                                <h4>🏢 Akcje</h4>
+                                <template x-for="symbol in allSymbols.stocks" :key="symbol">
+                                    <label>
+                                        <input type="checkbox" :value="symbol" x-model="selectedSymbols">
+                                        <span x-text="symbol"></span>
+                                    </label>
+                                </template>
+                            </div>
+                            
+                            <!-- Metale -->
+                            <div class="symbol-group">
+                                <h4>🥇 Metale</h4>
+                                <template x-for="symbol in allSymbols.metals" :key="symbol">
+                                    <label>
+                                        <input type="checkbox" :value="symbol" x-model="selectedSymbols">
+                                        <span x-text="symbol"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" 
+                               x-model="analysisConfig.isActive" 
+                               @change="updateAnalysisConfig()">
+                        Automatyczne analizy włączone
+                    </label>
+                </div>
+                
+                <button class="btn" @click="triggerManualAnalysis()">
+                    🚀 Uruchom analizę ręcznie
                 </button>
             </div>
 
@@ -582,8 +1373,289 @@
         </div>
     </div>
 
+    <!-- Modal szczegółów analizy AI -->
+    <div class="modal" :class="{'show': analysisModal.open}" @click.self="closeAnalysisModal()">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <div>
+                    <h2 style="color: #f1f5f9;">Szczegóły Analizy AI</h2>
+                    <template x-if="analysisModal.data">
+                        <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">
+                            <span x-text="analysisModal.data.symbol"></span> | 
+                            <span x-text="formatTimestamp(analysisModal.data.timestamp)"></span>
+                        </p>
+                    </template>
+                </div>
+                <span class="close" @click="closeAnalysisModal()">&times;</span>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab" 
+                        :class="{'active': analysisModal.activeTab === 'ai'}"
+                        @click="switchAnalysisTab('ai')">
+                    AI Analysis
+                </button>
+                <button class="modal-tab" 
+                        :class="{'active': analysisModal.activeTab === 'technical'}"
+                        @click="switchAnalysisTab('technical')">
+                    Technical
+                </button>
+                <button class="modal-tab" 
+                        :class="{'active': analysisModal.activeTab === 'macro'}"
+                        @click="switchAnalysisTab('macro')">
+                    Macro
+                </button>
+                <button class="modal-tab" 
+                        :class="{'active': analysisModal.activeTab === 'news'}"
+                        @click="switchAnalysisTab('news')">
+                    News
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <template x-if="analysisModal.data">
+                <div>
+                    <!-- AI Analysis Tab -->
+                    <div x-show="analysisModal.activeTab === 'ai'">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Recommendation</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.ai_recommendation || 'N/A'"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Confidence</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="(analysisModal.data.ai_confidence || 0) + '%'"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Tokens Used</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.tokens_used || 0"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Estimated Cost</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="'$' + (analysisModal.data.estimated_cost || 0).toFixed(4)"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #f1f5f9; font-size: 14px; margin-bottom: 10px;">Reasoning:</h3>
+                            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6; white-space: pre-wrap;" 
+                               x-text="analysisModal.data.ai_reasoning || 'Brak szczegółów'"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Tab -->
+                    <div x-show="analysisModal.activeTab === 'technical'">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Signal</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.technical_signal || 'N/A'"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Confidence</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="(analysisModal.data.technical_confidence || 0) + '%'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #f1f5f9; font-size: 14px; margin-bottom: 10px;">Technical Indicators:</h3>
+                            <template x-if="analysisModal.data.technical_details">
+                                <div style="color: #cbd5e1; font-size: 13px;">
+                                    <pre style="background: #1e293b; padding: 10px; border-radius: 6px; overflow-x: auto;" 
+                                         x-text="JSON.stringify(analysisModal.data.technical_details, null, 2)"></pre>
+                                </div>
+                            </template>
+                            <template x-if="!analysisModal.data.technical_details">
+                                <p style="color: #94a3b8;">Brak szczegółów</p>
+                            </template>
+                        </div>
+                    </div>
+                    
+                    <!-- Macro Tab -->
+                    <div x-show="analysisModal.activeTab === 'macro'">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Signal</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.macro_signal || 'N/A'"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Impact</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.macro_impact || 'N/A'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #f1f5f9; font-size: 14px; margin-bottom: 10px;">Macro Summary:</h3>
+                            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+                                Dane makroekonomiczne: Fed Rate, CPI Inflation, GDP Growth, Unemployment
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- News Tab -->
+                    <div x-show="analysisModal.activeTab === 'news'">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-card-label">Sentiment</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="analysisModal.data.news_sentiment || 'N/A'"></div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-label">Score</div>
+                                <div class="stat-card-value" style="font-size: 20px;" x-text="(analysisModal.data.news_score || 0) + '%'"></div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                            <h3 style="color: #f1f5f9; font-size: 14px; margin-bottom: 10px;">News Analysis:</h3>
+                            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+                                Analiza sentymentu z najnowszych wiadomości finansowych.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Modal edycji/dodawania strategii -->
+    <div class="modal" :class="{'show': modal.open}" @click.self="closeModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #f1f5f9;" x-text="modal.mode === 'add' ? 'Dodaj strategię' : 'Edytuj strategię'"></h2>
+                <span class="close" @click="closeModal()">&times;</span>
+            </div>
+            <form @submit.prevent="saveStrategy()">
+                <div class="form-group">
+                    <label>Nazwa strategii *</label>
+                    <input type="text" x-model="modal.formData.name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Typ strategii *</label>
+                    <select x-model="modal.formData.strategy_type" @change="updateParametersForm()" required>
+                        <option value="">Wybierz typ</option>
+                        <option value="RSI">RSI</option>
+                        <option value="MACD">MACD</option>
+                        <option value="BOLLINGER_BANDS">Bollinger Bands</option>
+                        <option value="MOVING_AVERAGE">Moving Average</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Symbol *</label>
+                    <select x-model="modal.formData.symbol" required>
+                        <option value="">Wybierz symbol</option>
+                        <optgroup label="Pary walutowe (Forex)">
+                            <option value="EUR/USD">EUR/USD</option>
+                            <option value="GBP/USD">GBP/USD</option>
+                            <option value="USD/JPY">USD/JPY</option>
+                            <option value="USD/CHF">USD/CHF</option>
+                            <option value="AUD/USD">AUD/USD</option>
+                            <option value="NZD/USD">NZD/USD</option>
+                            <option value="USD/CAD">USD/CAD</option>
+                        </optgroup>
+                        <optgroup label="Indeksy USA">
+                            <option value="SPX/USD">SPX/USD (S&P 500)</option>
+                            <option value="DJI/USD">DJI/USD (Dow Jones)</option>
+                            <option value="IXIC/USD">IXIC/USD (NASDAQ)</option>
+                            <option value="RUT/USD">RUT/USD (Russell 2000)</option>
+                        </optgroup>
+                        <optgroup label="Akcje USA">
+                            <option value="AAPL/USD">AAPL/USD (Apple)</option>
+                            <option value="MSFT/USD">MSFT/USD (Microsoft)</option>
+                            <option value="GOOGL/USD">GOOGL/USD (Google)</option>
+                            <option value="AMZN/USD">AMZN/USD (Amazon)</option>
+                            <option value="TSLA/USD">TSLA/USD (Tesla)</option>
+                            <option value="META/USD">META/USD (Meta)</option>
+                            <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
+                        </optgroup>
+                        <optgroup label="Metale szlachetne">
+                            <option value="XAU/USD">XAU/USD (Złoto)</option>
+                            <option value="XAG/USD">XAG/USD (Srebro)</option>
+                            <option value="XPT/USD">XPT/USD (Platyna)</option>
+                            <option value="XPD/USD">XPD/USD (Pallad)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Timeframe *</label>
+                    <select x-model="modal.formData.timeframe" required>
+                        <option value="1m">1m</option>
+                        <option value="5m">5m</option>
+                        <option value="15m">15m</option>
+                        <option value="30m">30m</option>
+                        <option value="1h">1h</option>
+                        <option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                        <option value="1w">1w</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Parametry strategii *</label>
+                    <div class="parameters-group">
+                        <template x-if="!modal.formData.strategy_type">
+                            <p style="color: #94a3b8; font-size: 13px;">Wybierz typ strategii aby zobaczyć parametry</p>
+                        </template>
+                        <template x-if="modal.formData.strategy_type === 'RSI'">
+                            <div>
+                                <label>Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.period" min="1" required>
+                                <label style="margin-top: 10px;">Oversold:</label>
+                                <input type="number" x-model.number="modal.formParameters.oversold" min="0" max="100" required>
+                                <label style="margin-top: 10px;">Overbought:</label>
+                                <input type="number" x-model.number="modal.formParameters.overbought" min="0" max="100" required>
+                            </div>
+                        </template>
+                        <template x-if="modal.formData.strategy_type === 'MACD'">
+                            <div>
+                                <label>Fast Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.fast_period" min="1" required>
+                                <label style="margin-top: 10px;">Slow Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.slow_period" min="1" required>
+                                <label style="margin-top: 10px;">Signal Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.signal_period" min="1" required>
+                            </div>
+                        </template>
+                        <template x-if="modal.formData.strategy_type === 'BOLLINGER_BANDS'">
+                            <div>
+                                <label>Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.period" min="1" required>
+                                <label style="margin-top: 10px;">Standard Deviation:</label>
+                                <input type="number" x-model.number="modal.formParameters.std_dev" min="0.1" step="0.1" required>
+                            </div>
+                        </template>
+                        <template x-if="modal.formData.strategy_type === 'MOVING_AVERAGE'">
+                            <div>
+                                <label>Short Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.short_period" min="1" required>
+                                <label style="margin-top: 10px;">Long Period:</label>
+                                <input type="number" x-model.number="modal.formParameters.long_period" min="1" required>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="modal.formData.is_active">
+                        Strategia aktywna
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" @click="closeModal()">Anuluj</button>
+                    <button type="submit" class="btn">Zapisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        // Model info
+        const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8000';
+
         const modelInfo = {
             'gpt-4o': 'GPT-4o: Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.',
             'gpt-4o-mini': 'GPT-4o Mini: Szybszy i tańszy (~$0.0001/request). Dobry do prostych analiz. Czas: 1-3s.',
@@ -592,20 +1664,743 @@
             'gpt-3.5-turbo': 'GPT-3.5 Turbo: Najtańszy (~$0.0005/request). Podstawowa analiza. Czas: 1-2s.'
         };
 
-        document.getElementById('model-select').addEventListener('change', function(e) {
-            const info = modelInfo[e.target.value];
-            document.getElementById('model-info').innerHTML = '<strong>' + e.target.value.toUpperCase() + ':</strong> ' + info.split(': ')[1];
-        });
+        function tradingBot() {
+            return {
+                // Stan aplikacji
+                statistics: null,
+                strategies: [],
+                signals: [],
+                activity: [],
+                uniqueSymbols: [],
+                loading: {
+                    statistics: false,
+                    strategies: false,
+                    signals: false,
+                    activity: false,
+                    aiAnalysis: false,
+                    tokenStats: false,
+                    analysisConfig: false
+                },
+                errorMessage: '',
+                successMessage: '',
+                backendWarning: false,
+                apiKey: null,
+                lastUpdate: '-',
+                checkInterval: 15,
+                refreshIndicators: {
+                    stats: '',
+                    signals: '',
+                    activity: '',
+                    aiAnalysis: ''
+                },
+                
+                // AI
+                aiModel: 'gpt-4o',
+                modelInfoText: '<strong>GPT-4o:</strong> Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.',
+                lastAnalysis: '-',
+                apiCallsToday: 0,
+                
+                // Modal
+                modal: {
+                    open: false,
+                    mode: 'add',
+                    strategyId: null,
+                    formData: {
+                        name: '',
+                        strategy_type: '',
+                        symbol: '',
+                        timeframe: '1h',
+                        is_active: true
+                    },
+                    formParameters: {}
+                },
+                
+                // AI Analysis Results
+                aiAnalysisResults: [],
+                aiAnalysisFilter: {
+                    symbol: '',
+                    signal: ''
+                },
+                
+                // Token Statistics
+                tokenStats: {
+                    total_tokens: 0,
+                    total_cost: 0,
+                    analyses_count: 0,
+                    avg_tokens_per_analysis: 0,
+                    today_tokens: 0,
+                    today_cost: 0,
+                    today_analyses: 0
+                },
+                
+                // Analysis Config
+                analysisConfig: {
+                    interval: 15,
+                    notificationThreshold: 60,
+                    isActive: true,
+                    enabledSymbols: []
+                },
+                
+                // Symbols for multi-select
+                allSymbols: {
+                    forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CHF', 'USD/CAD', 'NZD/USD'],
+                    indices: ['SPX/USD', 'DJI/USD', 'IXIC/USD', 'RUT/USD'],
+                    stocks: ['AAPL/USD', 'MSFT/USD', 'GOOGL/USD', 'AMZN/USD', 'TSLA/USD', 'META/USD', 'NVDA/USD'],
+                    metals: ['XAU/USD', 'XAG/USD', 'XPT/USD', 'XPD/USD']
+                },
+                selectedSymbols: [],
+                selectAllSymbols: false,
+                
+                // Analysis Details Modal
+                analysisModal: {
+                    open: false,
+                    data: null,
+                    activeTab: 'ai'
+                },
+                
+                // SSE Connection
+                sseConnection: null,
+                
+                // Metody
+                async init() {
+                    try {
+                        await Promise.all([
+                            this.loadStatistics(),
+                            this.loadStrategies(),
+                            this.loadRecentSignals(),
+                            this.loadBotActivity(),
+                            this.loadAIAnalysisResults(),
+                            this.loadTokenStatistics(),
+                            this.loadAnalysisConfig()
+                        ]);
+                        this.updateLastUpdate();
+                        
+                        // Połącz SSE dla real-time updates
+                        this.connectSSE();
+                        
+                        // Automatyczne odświeżanie
+                        setInterval(() => {
+                            this.loadStatistics();
+                            this.loadRecentSignals();
+                            this.loadBotActivity();
+                            this.updateLastUpdate();
+                        }, 30000);
+                        
+                        setInterval(() => {
+                            this.loadStatistics();
+                            this.updateLastUpdate();
+                        }, 60000);
+                        
+                        // Aktualizacja czasu ostatniej analizy AI
+                        setInterval(() => {
+                            const now = new Date();
+                            this.lastAnalysis = now.toLocaleTimeString('pl-PL');
+                        }, 1000);
+                    } catch (error) {
+                        if (error.message && error.message.includes('Backend nie jest dostępny')) {
+                            this.showError(error.message);
+                        } else {
+                            this.showError(`Błąd inicjalizacji: ${error.message}`);
+                        }
+                    }
+                },
+                
+                async getApiKey() {
+                    if (!this.apiKey) {
+                        this.apiKey = sessionStorage.getItem('api_key') || prompt('Podaj API Key:');
+                        if (this.apiKey) {
+                            sessionStorage.setItem('api_key', this.apiKey);
+                        } else {
+                            throw new Error('API Key jest wymagany');
+                        }
+                    }
+                    return this.apiKey;
+                },
+                
+                async apiCall(endpoint, method = 'GET', body = null) {
+                    try {
+                        const key = await this.getApiKey();
+                        const options = {
+                            method,
+                            headers: {
+                                'X-API-Key': key,
+                                'Content-Type': 'application/json'
+                            }
+                        };
+                        if (body) options.body = JSON.stringify(body);
+                        
+                        const url = API_BASE === '/api' ? `${API_BASE}${endpoint}` : `${API_BASE}${endpoint}`;
+                        const response = await fetch(url, options);
+                        
+                        if (response.status === 403) {
+                            sessionStorage.removeItem('api_key');
+                            this.apiKey = null;
+                            throw new Error('Nieprawidłowy API Key. Podaj ponownie.');
+                        }
+                        
+                        if (response.status === 502) {
+                            throw new Error('Backend nie jest dostępny. Sprawdź czy backend działa w Dockerze (docker-compose ps)');
+                        }
+                        
+                        if (!response.ok) {
+                            const error = await response.json().catch(() => ({ detail: response.statusText }));
+                            throw new Error(error.detail || `HTTP ${response.status}`);
+                        }
+                        
+                        return await response.json();
+                    } catch (error) {
+                        if (error.message.includes('Failed to fetch') || 
+                            error.message.includes('ERR_CONNECTION_REFUSED') ||
+                            error.message.includes('ERR_CONNECTION_RESET') ||
+                            error.message.includes('ERR_SOCKET_NOT_CONNECTED') ||
+                            error.message.includes('Bad Gateway') ||
+                            error.message.includes('502')) {
+                            const friendlyError = new Error('Backend nie jest dostępny. Sprawdź czy backend działa w Dockerze (docker-compose ps)');
+                            friendlyError.name = 'ConnectionError';
+                            throw friendlyError;
+                        }
+                        if (error.name !== 'ConnectionError') {
+                            console.error('API Error:', error);
+                        }
+                        throw error;
+                    }
+                },
+                
+                async loadStatistics() {
+                    try {
+                        this.loading.statistics = true;
+                        const stats = await this.apiCall('/statistics');
+                        this.backendWarning = false;
+                        this.statistics = stats;
+                        this.uniqueSymbols = await this.loadUniqueSymbols();
+                        this.refreshIndicators.stats = '✓';
+                        setTimeout(() => this.refreshIndicators.stats = '', 2000);
+                    } catch (error) {
+                        this.showError(error.message);
+                        if (error.message.includes('Backend nie jest dostępny')) {
+                            return;
+                        }
+                    } finally {
+                        this.loading.statistics = false;
+                    }
+                },
+                
+                async loadUniqueSymbols() {
+                    try {
+                        const data = await this.apiCall('/strategies');
+                        return [...new Set(data.strategies.filter(s => s.is_active).map(s => s.symbol))];
+                    } catch {
+                        return [];
+                    }
+                },
+                
+                async loadStrategies() {
+                    try {
+                        this.loading.strategies = true;
+                        const data = await this.apiCall('/strategies');
+                        this.backendWarning = false;
+                        this.strategies = data.strategies || [];
+                    } catch (error) {
+                        this.showError(error.message);
+                        if (error.message.includes('Backend nie jest dostępny')) {
+                            return;
+                        }
+                    } finally {
+                        this.loading.strategies = false;
+                    }
+                },
+                
+                async loadRecentSignals() {
+                    try {
+                        this.loading.signals = true;
+                        const data = await this.apiCall('/signals/recent?limit=10');
+                        this.backendWarning = false;
+                        this.signals = data.signals || [];
+                        this.refreshIndicators.signals = '✓';
+                        setTimeout(() => this.refreshIndicators.signals = '', 2000);
+                    } catch (error) {
+                        this.showError(error.message);
+                        if (error.message.includes('Backend nie jest dostępny')) {
+                            return;
+                        }
+                    } finally {
+                        this.loading.signals = false;
+                    }
+                },
+                
+                async loadBotActivity() {
+                    try {
+                        this.loading.activity = true;
+                        const data = await this.apiCall('/check-signals', 'POST');
+                        this.backendWarning = false;
+                        this.activity = data.results || [];
+                        this.refreshIndicators.activity = '✓';
+                        setTimeout(() => this.refreshIndicators.activity = '', 2000);
+                    } catch (error) {
+                        this.showError(error.message);
+                        if (error.message.includes('Backend nie jest dostępny')) {
+                            return;
+                        }
+                    } finally {
+                        this.loading.activity = false;
+                    }
+                },
+                
+                async checkBackendConnection() {
+                    try {
+                        const healthUrl = API_BASE === '/api' ? '/api/health' : `${API_BASE}/health`;
+                        const response = await fetch(healthUrl);
+                        if (response.ok) {
+                            this.backendWarning = false;
+                            this.showSuccess('Połączenie z backendem przywrócone!');
+                            await this.init();
+                        } else {
+                            throw new Error('Backend odpowiada, ale zwraca błąd');
+                        }
+                    } catch (error) {
+                        this.showError('Backend nadal nie jest dostępny. Sprawdź czy serwer działa.');
+                    }
+                },
+                
+                updateModelInfo() {
+                    const info = modelInfo[this.aiModel] || '';
+                    this.modelInfoText = '<strong>' + this.aiModel.toUpperCase() + ':</strong> ' + info.split(': ')[1];
+                },
+                
+                async runAIAnalysis() {
+                    // Odśwież listę strategii przed analizą
+                    await this.loadStrategies();
+                    
+                    // Użyj pierwszej aktywnej strategii lub pierwszej strategii z listy
+                    const strategy = this.strategies.find(s => s.is_active) || this.strategies[0];
+                    
+                    console.log('Strategie:', this.strategies);
+                    console.log('Wybrana strategia:', strategy);
+                    
+                    if (!strategy) {
+                        this.showError('Brak strategii. Dodaj strategię aby uruchomić analizę AI.');
+                        return;
+                    }
+                    
+                    try {
+                        this.loading.strategies = true;
+                        
+                        // Pobierz API key
+                        const key = await this.getApiKey();
+                        
+                        // Zbuduj URL
+                        const url = API_BASE === '/api' 
+                            ? `/api/ai/analyze?symbol=${strategy.symbol}&timeframe=${strategy.timeframe}`
+                            : `${API_BASE}/ai/analyze?symbol=${strategy.symbol}&timeframe=${strategy.timeframe}`;
+                        
+                        // Wywołaj endpoint AI
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-API-Key': key,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json().catch(() => ({ detail: response.statusText }));
+                            throw new Error(error.detail || `HTTP ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        
+                        // Wyświetl wyniki analizy
+                        const recommendation = result.recommendation || 'HOLD';
+                        const confidence = result.confidence || 0;
+                        const reasoning = result.ai_analysis?.reasoning || 'Brak szczegółów';
+                        
+                        this.showSuccess(`✅ Analiza AI dla ${strategy.symbol}:\n${recommendation} (Pewność: ${confidence}%)\n\n${reasoning.substring(0, 150)}...`);
+                        
+                        // Zaktualizuj ostatnią analizę
+                        this.lastAnalysis = new Date().toLocaleTimeString('pl-PL');
+                        this.apiCallsToday += 1;
+                        
+                        // Odśwież dane
+                        await this.loadRecentSignals();
+                        await this.loadBotActivity();
+                        
+                    } catch (error) {
+                        console.error('AI Analysis error:', error);
+                        this.showError(`❌ Błąd analizy AI: ${error.message}`);
+                    } finally {
+                        this.loading.strategies = false;
+                    }
+                },
+                
+                openModal(mode, id = null) {
+                    this.modal.mode = mode;
+                    this.modal.strategyId = id;
+                    this.modal.open = true;
+                    
+                    if (mode === 'add') {
+                        this.modal.formData = {
+                            name: '',
+                            strategy_type: '',
+                            symbol: '',
+                            timeframe: '1h',
+                            is_active: true
+                        };
+                        this.modal.formParameters = {};
+                    } else if (mode === 'edit' && id) {
+                        this.loadStrategyForEdit(id);
+                    }
+                },
+                
+                async loadStrategyForEdit(id) {
+                    try {
+                        const data = await this.apiCall(`/strategies/${id}`);
+                        const strategy = data.strategy;
+                        
+                        this.modal.formData = {
+                            name: strategy.name,
+                            strategy_type: strategy.strategy_type,
+                            symbol: strategy.symbol,
+                            timeframe: strategy.timeframe,
+                            is_active: strategy.is_active
+                        };
+                        
+                        this.modal.formParameters = { ...strategy.parameters };
+                    } catch (error) {
+                        this.showError(`Błąd ładowania strategii: ${error.message}`);
+                    }
+                },
+                
+                updateParametersForm() {
+                    if (!this.modal.formData.strategy_type) {
+                        this.modal.formParameters = {};
+                        return;
+                    }
+                    
+                    const type = this.modal.formData.strategy_type;
+                    if (type === 'RSI' && !this.modal.formParameters.period) {
+                        this.modal.formParameters = { period: 14, oversold: 30, overbought: 70 };
+                    } else if (type === 'MACD' && !this.modal.formParameters.fast_period) {
+                        this.modal.formParameters = { fast_period: 12, slow_period: 26, signal_period: 9 };
+                    } else if (type === 'BOLLINGER_BANDS' && !this.modal.formParameters.period) {
+                        this.modal.formParameters = { period: 20, std_dev: 2 };
+                    } else if (type === 'MOVING_AVERAGE' && !this.modal.formParameters.short_period) {
+                        this.modal.formParameters = { short_period: 50, long_period: 200 };
+                    }
+                },
+                
+                closeModal() {
+                    this.modal.open = false;
+                    this.modal.formData = {
+                        name: '',
+                        strategy_type: '',
+                        symbol: '',
+                        timeframe: '1h',
+                        is_active: true
+                    };
+                    this.modal.formParameters = {};
+                },
+                
+                async saveStrategy() {
+                    try {
+                        const strategyData = {
+                            name: this.modal.formData.name,
+                            strategy_type: this.modal.formData.strategy_type,
+                            symbol: this.modal.formData.symbol,
+                            timeframe: this.modal.formData.timeframe,
+                            parameters: { ...this.modal.formParameters },
+                            is_active: this.modal.formData.is_active
+                        };
+                        
+                        if (this.modal.strategyId) {
+                            await this.apiCall(`/strategies/${this.modal.strategyId}`, 'PUT', strategyData);
+                            this.showSuccess('Strategia zaktualizowana pomyślnie');
+                        } else {
+                            await this.apiCall('/strategies', 'POST', strategyData);
+                            this.showSuccess('Strategia utworzona pomyślnie');
+                        }
+                        
+                        this.closeModal();
+                        await this.loadStrategies();
+                        await this.loadStatistics();
+                    } catch (error) {
+                        this.showError(`Błąd zapisywania: ${error.message}`);
+                    }
+                },
+                
+                async deleteStrategy(id) {
+                    if (!confirm('Czy na pewno chcesz usunąć tę strategię?')) {
+                        return;
+                    }
+                    
+                    try {
+                        await this.apiCall(`/strategies/${id}`, 'DELETE');
+                        this.showSuccess('Strategia usunięta pomyślnie');
+                        await this.loadStrategies();
+                        await this.loadStatistics();
+                    } catch (error) {
+                        this.showError(`Błąd usuwania: ${error.message}`);
+                    }
+                },
+                
+                showError(message) {
+                    this.errorMessage = message;
+                    this.backendWarning = message.includes('Backend nie jest dostępny');
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 10000);
+                },
 
-        function runAIAnalysis() {
-            alert('Uruchamiam analizę AI...\n\nAby połączyć z prawdziwym API:\n1. Ustaw OPENAI_API_KEY w .env\n2. Uruchom backend\n3. Wywołaj POST /ai/analyze');
+                showSuccess(message) {
+                    this.successMessage = message;
+                    setTimeout(() => {
+                        this.successMessage = '';
+                    }, 10000);
+                },
+                
+                updateLastUpdate() {
+                    const now = new Date();
+                    this.lastUpdate = now.toLocaleTimeString('pl-PL');
+                },
+                
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    return new Date(dateString).toLocaleString('pl-PL');
+                },
+                
+                formatParameters(params) {
+                    if (!params) return '';
+                    const str = JSON.stringify(params);
+                    return str.length > 60 ? str.substring(0, 60) + '...' : str;
+                },
+                
+                formatIndicators(indicators) {
+                    if (!indicators) return '';
+                    return Object.entries(indicators)
+                        .map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toFixed(2) : v}`)
+                        .join(', ');
+                },
+                
+                // ===== AI ANALYSIS METHODS =====
+                
+                async loadAIAnalysisResults() {
+                    try {
+                        this.loading.aiAnalysis = true;
+                        const params = new URLSearchParams();
+                        if (this.aiAnalysisFilter.symbol) {
+                            params.append('symbol', this.aiAnalysisFilter.symbol);
+                        }
+                        params.append('limit', '50');
+                        
+                        const data = await this.apiCall(`/ai/analysis-results?${params}`);
+                        this.aiAnalysisResults = data.results || [];
+                        
+                        // Filtruj po sygnale (frontend)
+                        if (this.aiAnalysisFilter.signal) {
+                            this.aiAnalysisResults = this.aiAnalysisResults.filter(
+                                r => r.final_signal === this.aiAnalysisFilter.signal
+                            );
+                        }
+                        
+                        this.refreshIndicators.aiAnalysis = '✓';
+                        setTimeout(() => this.refreshIndicators.aiAnalysis = '', 2000);
+                    } catch (error) {
+                        this.showError(error.message);
+                    } finally {
+                        this.loading.aiAnalysis = false;
+                    }
+                },
+                
+                async loadTokenStatistics() {
+                    try {
+                        const data = await this.apiCall('/ai/token-statistics');
+                        this.tokenStats = data;
+                    } catch (error) {
+                        console.error('Error loading token stats:', error);
+                    }
+                },
+                
+                async loadAnalysisConfig() {
+                    try {
+                        const data = await this.apiCall('/ai/analysis-config');
+                        this.analysisConfig = {
+                            interval: data.analysis_interval,
+                            notificationThreshold: data.notification_threshold,
+                            isActive: data.is_active
+                        };
+                        this.selectedSymbols = data.enabled_symbols || [];
+                        this.selectAllSymbols = this.selectedSymbols.length === this.getAllSymbolsList().length;
+                    } catch (error) {
+                        console.error('Error loading analysis config:', error);
+                    }
+                },
+                
+                async updateAnalysisConfig() {
+                    try {
+                        await this.apiCall('/ai/analysis-config', 'PUT', {
+                            analysis_interval: this.analysisConfig.interval,
+                            notification_threshold: this.analysisConfig.notificationThreshold,
+                            is_active: this.analysisConfig.isActive,
+                            enabled_symbols: this.selectedSymbols
+                        });
+                        this.showSuccess('Konfiguracja zaktualizowana');
+                    } catch (error) {
+                        this.showError(error.message);
+                    }
+                },
+                
+                async triggerManualAnalysis() {
+                    try {
+                        this.loading.aiAnalysis = true;
+                        this.showSuccess('Uruchamiam analizę... To może potrwać kilka minut.');
+                        
+                        const result = await this.apiCall('/ai/trigger-analysis', 'POST', {
+                            symbols: this.selectedSymbols.length > 0 ? this.selectedSymbols : null
+                        });
+                        
+                        this.showSuccess(result.message);
+                        await this.loadAIAnalysisResults();
+                        await this.loadTokenStatistics();
+                    } catch (error) {
+                        this.showError(error.message);
+                    } finally {
+                        this.loading.aiAnalysis = false;
+                    }
+                },
+                
+                // ===== MODAL METHODS =====
+                
+                async showAnalysisDetails(analysisId) {
+                    try {
+                        const data = await this.apiCall(`/ai/analysis-results/${analysisId}`);
+                        this.analysisModal.data = data;
+                        this.analysisModal.activeTab = 'ai';
+                        this.analysisModal.open = true;
+                    } catch (error) {
+                        this.showError(`Błąd ładowania szczegółów: ${error.message}`);
+                    }
+                },
+                
+                closeAnalysisModal() {
+                    this.analysisModal.open = false;
+                    this.analysisModal.data = null;
+                    this.analysisModal.activeTab = 'ai';
+                },
+                
+                switchAnalysisTab(tab) {
+                    this.analysisModal.activeTab = tab;
+                },
+                
+                // ===== SYMBOLS METHODS =====
+                
+                getAllSymbolsList() {
+                    return [
+                        ...this.allSymbols.forex,
+                        ...this.allSymbols.indices,
+                        ...this.allSymbols.stocks,
+                        ...this.allSymbols.metals
+                    ];
+                },
+                
+                toggleAllSymbols() {
+                    if (this.selectAllSymbols) {
+                        this.selectedSymbols = this.getAllSymbolsList();
+                    } else {
+                        this.selectedSymbols = [];
+                    }
+                },
+                
+                // ===== SSE METHODS =====
+                
+                connectSSE() {
+                    if (this.sseConnection) return; // już połączone
+                    
+                    const url = API_BASE === '/api' 
+                        ? '/api/stream/ai-updates' 
+                        : `${API_BASE}/stream/ai-updates`;
+                    
+                    try {
+                        this.sseConnection = new EventSource(url);
+                        
+                        this.sseConnection.addEventListener('new_analysis', (e) => {
+                            try {
+                                const data = JSON.parse(e.data);
+                                // Dodaj nową analizę do listy
+                                this.aiAnalysisResults.unshift(data);
+                                // Ogranicz listę do 50 elementów
+                                if (this.aiAnalysisResults.length > 50) {
+                                    this.aiAnalysisResults = this.aiAnalysisResults.slice(0, 50);
+                                }
+                                // Aktualizuj statystyki
+                                this.loadTokenStatistics();
+                            } catch (error) {
+                                console.error('Error parsing new_analysis event:', error);
+                            }
+                        });
+                        
+                        this.sseConnection.addEventListener('token_update', (e) => {
+                            try {
+                                const data = JSON.parse(e.data);
+                                this.tokenStats = data;
+                            } catch (error) {
+                                console.error('Error parsing token_update event:', error);
+                            }
+                        });
+                        
+                        this.sseConnection.addEventListener('config_change', (e) => {
+                            try {
+                                const data = JSON.parse(e.data);
+                                this.analysisConfig = {
+                                    interval: data.analysis_interval,
+                                    notificationThreshold: data.notification_threshold,
+                                    isActive: data.is_active
+                                };
+                                this.selectedSymbols = data.enabled_symbols || [];
+                            } catch (error) {
+                                console.error('Error parsing config_change event:', error);
+                            }
+                        });
+                        
+                        this.sseConnection.onerror = (error) => {
+                            console.error('SSE error:', error);
+                            this.disconnectSSE();
+                            // Retry po 5 sekundach
+                            setTimeout(() => this.connectSSE(), 5000);
+                        };
+                        
+                        console.log('SSE connection established');
+                    } catch (error) {
+                        console.error('Error connecting SSE:', error);
+                    }
+                },
+                
+                disconnectSSE() {
+                    if (this.sseConnection) {
+                        this.sseConnection.close();
+                        this.sseConnection = null;
+                        console.log('SSE connection closed');
+                    }
+                },
+                
+                // ===== HELPER METHODS =====
+                
+                getAgreementClass(score) {
+                    if (!score) return 'low';
+                    if (score >= 75) return 'high';
+                    if (score >= 50) return 'medium';
+                    return 'low';
+                },
+                
+                formatTimestamp(timestamp) {
+                    if (!timestamp) return '';
+                    return new Date(timestamp).toLocaleString('pl-PL');
+                },
+                
+                formatCost(cost) {
+                    if (!cost) return '$0.0000';
+                    return '$' + cost.toFixed(4);
+                }
+            }
         }
-
-        // Update timestamp
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('last-analysis').textContent = now.toLocaleTimeString('pl-PL');
-        }, 1000);
     </script>
 </body>
 </html>

@@ -1,0 +1,138 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    .GITIGNORE - SZYBKI PRZEWODNIK                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📊 STATYSTYKI:
+   Przed: 107 linii → Po: 422 linii
+   Dodano: ~315 nowych wzorców zabezpieczeń
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🔐 KRYTYCZNE - CO JEST CHRONIONE                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ SEKRETY I KLUCZE:
+   .env, .env.local, *.secret, credentials.json, token.json
+   *api_key*, *secret_key*, *access_token*
+
+✅ CERTYFIKATY:
+   *.pem, *.key, *.crt, *.p12, *.pfx
+   id_rsa, id_ed25519, *.ppk
+
+✅ BAZY DANYCH:
+   *.db, *.sqlite, *.sqlite3, *.db-journal, *.db-shm, *.db-wal
+
+✅ LOGI:
+   *.log, logs/, debug.log, crash.log
+
+✅ TRADING DATA:
+   market_data/, historical_data/, *.pickle, *.pkl
+   models/, checkpoints/, *.h5, *.pt, *.pth
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    📁 CO JEST IGNOROWANE                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🐍 PYTHON:
+   __pycache__/, *.pyc, *.pyo, dist/, build/, *.egg-info/
+   venv/, env/, .venv, .conda/
+
+💻 IDE:
+   .vscode/* (oprócz settings.json)
+   .cursor/* (oprócz settings.json)
+   .claude/* (oprócz settings.json)
+   .idea/, *.iml
+
+🐳 DOCKER:
+   docker-compose.override.yml, docker-compose.local.yml
+   .docker/, docker-data/, docker-volumes/
+
+🖥️ OS:
+   .DS_Store (macOS), Thumbs.db (Windows), .directory (Linux)
+
+📦 CACHE I TEMP:
+   cache/, .cache/, tmp/, temp/, *.tmp, *.bak
+
+🧪 TESTING:
+   .pytest_cache/, .coverage, htmlcov/, .tox/
+
+📊 MONITORING:
+   monitoring/, metrics/, *.rrd
+
+💾 BACKUP:
+   backups/, *.backup, *.zip, *.tar.gz, *.sql.gz
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ✅ CO NIE JEST IGNOROWANE (PRAWIDŁOWO)                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ .env.example              - Przykładowa konfiguracja
+✅ .envrc                     - Aktywacja conda
+✅ .vscode/settings.json      - Ustawienia IDE
+✅ .claude/settings.json      - Ustawienia Claude
+✅ environment.yml            - Definicja środowiska
+✅ activate.sh                - Skrypt aktywacji
+✅ Makefile                   - Komendy projektu
+✅ requirements.txt           - Zależności Python
+✅ docker-compose.yml         - Konfiguracja Docker
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🔍 WERYFIKACJA                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Sprawdź czy plik jest ignorowany:
+   git check-ignore -v nazwa_pliku
+
+Sprawdź wszystkie ignorowane pliki:
+   git status --ignored
+
+Sprawdź co będzie commitowane:
+   git status
+
+Sprawdź czy nie ma sekretów w zmianach:
+   git diff | grep -i "password\|secret\|key\|token"
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ⚠️  PRZED COMMITOWANIEM                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+1. git status              - Sprawdź co będzie commitowane
+2. git diff                - Przejrzyj zmiany
+3. git diff --stat         - Sprawdź rozmiar plików
+4. Szukaj sekretów         - grep -r "password\|secret\|key" .
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🚨 JEŚLI PRZYPADKOWO DODAŁEŚ SEKRET                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+NIE commitowałeś:
+   git reset HEAD plik_z_sekretem
+   git checkout -- plik_z_sekretem
+
+Commitowałeś (NIE pushowałeś):
+   git reset --soft HEAD~1
+
+Pushowałeś:
+   1. ZMIEŃ SEKRET NATYCHMIAST!
+   2. Użyj git-filter-repo lub BFG Repo-Cleaner
+   3. Force push (git push --force)
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    📚 DOKUMENTACJA                                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Szczegóły: GITIGNORE_CHANGES.md
+GitHub templates: https://github.com/github/gitignore
+Generator: https://www.toptal.com/developers/gitignore
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ✨ REZULTAT                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ Repozytorium jest bezpieczne
+✅ Sekrety są chronione
+✅ Cache i temp files są ignorowane
+✅ Cross-platform compatibility
+✅ Trading data i modele ML są ignorowane
+✅ Zgodne z najlepszymi praktykami
+
+Twoje repozytorium jest teraz czyste i bezpieczne! 🎉

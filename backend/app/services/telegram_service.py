@@ -9,18 +9,20 @@ import logging
 class TelegramService:
     """Serwis do komunikacji z Telegram Bot API"""
     
-    def __init__(self, bot_token: str, chat_id: str):
+    def __init__(self, bot_token: str, chat_id: str, database=None):
         """
         Inicjalizacja serwisu Telegram
         
         Args:
             bot_token: Token bota z @BotFather
             chat_id: ID czatu do wysyłania wiadomości
+            database: Instancja bazy danych (opcjonalne, do logowania aktywności)
         """
         self.bot_token = bot_token
         self.chat_id = chat_id
         self.base_url = f"https://api.telegram.org/bot{bot_token}"
         self.logger = logging.getLogger("trading_bot.telegram")
+        self.database = database
     
     async def send_message(
         self,
@@ -81,7 +83,7 @@ class TelegramService:
         Args:
             signal_type: BUY, SELL, HOLD
             strategy_name: Nazwa strategii
-            symbol: Symbol (np. BTC/USDT)
+            symbol: Symbol (np. EUR/USD)
             price: Cena
             indicator_values: Wartości wskaźników
         
@@ -121,7 +123,45 @@ class TelegramService:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         message += f"\n<i>Time: {timestamp}</i>"
         
-        return await self.send_message(message)
+        # Loguj przed wysyłką
+        if self.database:
+            self.database.create_activity_log(
+                log_type='telegram',
+                message=f"Wysyłanie sygnału {signal_type} na Telegram",
+                symbol=symbol,
+                strategy_name=strategy_name,
+                details={
+                    'signal_type': signal_type,
+                    'price': price,
+                    'indicator_values': indicator_values or {}
+                },
+                status='success'
+            )
+        
+        result = await self.send_message(message)
+        
+        # Loguj po wysyłce
+        if self.database:
+            if result:
+                self.database.create_activity_log(
+                    log_type='telegram',
+                    message=f"Sygnał {signal_type} wysłany pomyślnie na Telegram",
+                    symbol=symbol,
+                    strategy_name=strategy_name,
+                    details={'signal_type': signal_type},
+                    status='success'
+                )
+            else:
+                self.database.create_activity_log(
+                    log_type='telegram',
+                    message=f"Błąd wysyłki sygnału {signal_type} na Telegram",
+                    symbol=symbol,
+                    strategy_name=strategy_name,
+                    details={'signal_type': signal_type},
+                    status='error'
+                )
+        
+        return result
     
     async def send_alert(
         self,
@@ -286,7 +326,7 @@ if __name__ == "__main__":
             await service.send_signal(
                 signal_type="BUY",
                 strategy_name="RSI Conservative",
-                symbol="BTC/USDT",
+                symbol="EUR/USD",
                 price=45000.00,
                 indicator_values={
                     "RSI": 25.5,

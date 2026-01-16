@@ -1,0 +1,37 @@
+name: ghost-trader
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11.13
+  - pip
+  - pip:
+    # FastAPI i serwer
+    - fastapi==0.109.0
+    - uvicorn[standard]==0.27.0
+    - python-multipart==0.0.6
+    
+    # Pydantic do walidacji
+    - pydantic==2.5.3
+    - pydantic-settings==2.1.0
+    
+    # Async HTTP
+    - aiohttp==3.9.1
+    
+    # Rate limiting
+    - slowapi==0.1.9
+    
+    # Environment variables
+    - python-dotenv==1.0.0
+    
+    # Scheduling
+    - schedule==1.2.0
+    
+    # Market data
+    - yfinance==0.2.32
+    - pandas==2.1.4
+    - numpy==1.26.3
+    
+    # Testing
+    - pytest==7.4.3
+    - pytest-asyncio==0.21.1

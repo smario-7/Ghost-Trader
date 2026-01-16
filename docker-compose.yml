@@ -22,6 +22,9 @@ services:
       - LOG_FILE=/app/data/logs/bot.log
       - BACKUP_DIR=/app/data/backups
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8080}
+      # OpenAI API (opcjonalne - tylko dla funkcji AI)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
     restart: unless-stopped
     networks:
       - trading-bot-network
@@ -31,6 +34,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # Scheduler - sprawdza sygnały co X minut
   scheduler:
@@ -46,12 +53,19 @@ services:
       - CHECK_INTERVAL=${CHECK_INTERVAL:-15}
       - DATABASE_PATH=/app/data/trading_bot.db
       - LOG_FILE=/app/data/logs/scheduler.log
+      # OpenAI API (opcjonalne - tylko dla funkcji AI)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
     command: python -m app.scheduler
     restart: unless-stopped
     networks:
       - trading-bot-network
     depends_on:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 192M
 
   # Frontend (opcjonalnie)
   frontend:
@@ -67,6 +81,10 @@ services:
       - trading-bot-network
     depends_on:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 64M
 
 networks:
   trading-bot-network:
