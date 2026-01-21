@@ -37,7 +37,7 @@ data/
 *.xls
 
 # Pliki robocze i notatki
-ETAP*_SUMMARY.md
+ETAP*.md
 CLAUDE.md
 TODO.md
 NOTES.md

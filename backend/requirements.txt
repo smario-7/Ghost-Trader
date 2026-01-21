@@ -26,9 +26,10 @@ schedule==1.2.0
 # Logging jest wbudowany w Python
 
 # Market data
-yfinance==0.2.32
+yfinance==1.0
 pandas==2.1.4
 numpy==1.26.3
+requests==2.31.0
 
 # Testing
 pytest==7.4.3

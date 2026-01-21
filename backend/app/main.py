@@ -64,21 +64,30 @@ app.add_middleware(
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-async def verify_api_key(api_key: str = Security(api_key_header)):
-    """Weryfikacja klucza API"""
-    if not api_key:
-        logger.warning("Brak klucza API w żądaniu")
+async def verify_api_key(
+    api_key: str = Security(api_key_header),
+    api_key_query: Optional[str] = Query(None, alias="api_key")
+):
+    """
+    Weryfikacja klucza API z nagłówka lub parametru URL.
+    Parametr URL jest używany dla SSE (EventSource nie obsługuje custom headers).
+    """
+    # Sprawdź klucz z nagłówka lub z parametru URL
+    key = api_key or api_key_query
+    
+    if not key:
+        logger.warning("Brak klucza API w żądaniu (header i query)")
         raise HTTPException(
             status_code=403,
-            detail="Brak klucza API. Dodaj header: X-API-Key"
+            detail="Brak klucza API. Dodaj header X-API-Key lub parametr ?api_key="
         )
-    if api_key != settings.api_key:
-        logger.warning(f"Nieprawidłowy klucz API: {api_key[:10]}...")
+    if key != settings.api_key:
+        logger.warning(f"Nieprawidłowy klucz API: {key[:10]}...")
         raise HTTPException(
             status_code=403,
             detail="Nieprawidłowy klucz API"
         )
-    return api_key
+    return key
 
 
 # Dependency injection
@@ -267,6 +276,421 @@ async def test_activity_logs_endpoint(request: Request):
         "message": "Activity logs endpoint routing works",
         "timestamp": datetime.now().isoformat()
     }
+
+
+@app.post("/telegram/test-message", dependencies=[Depends(verify_api_key)])
+@limiter.limit("5/minute")
+async def test_telegram_message(
+    request: Request,
+    telegram: TelegramService = Depends(get_telegram_service),
+    db: Database = Depends(get_database)
+):
+    """
+    Testowe wysłanie wiadomości na Telegram
+    
+    Wysyła testowy sygnał BUY dla EUR/USD z przykładowymi wskaźnikami.
+    Przydatne do weryfikacji działania integracji z Telegram.
+    """
+    try:
+        logger.info("Sending test Telegram message")
+        
+        success = await telegram.send_signal(
+            signal_type="BUY",
+            strategy_name="Test Strategy",
+            symbol="EUR/USD",
+            price=1.0850,
+            indicator_values={"RSI": 35.5, "MACD": 0.0012}
+        )
+        
+        if success:
+            logger.info("Test message sent successfully")
+            return {
+                "success": True,
+                "message": "Testowa wiadomość została wysłana na Telegram",
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            logger.error("Failed to send test message")
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się wysłać wiadomości na Telegram"
+            )
+    except Exception as e:
+        logger.error(f"Error sending test message: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/telegram/get-chat-id")
+@limiter.limit("10/minute")
+async def get_chat_id_instructions(request: Request):
+    """
+    Wyświetla instrukcje jak uzyskać Telegram CHAT_ID
+    
+    Ten endpoint nie wymaga autoryzacji, aby ułatwić konfigurację.
+    """
+    instructions = {
+        "message": "Jak uzyskać Telegram CHAT_ID",
+        "steps": [
+            "1. Napisz wiadomość do swojego bota na Telegramie (np. /start)",
+            "2. Użyj endpointu GET /telegram/get-updates (wymaga API key)",
+            "3. Znajdź w odpowiedzi pole 'from' -> 'id' - to jest Twój CHAT_ID",
+            "4. Zmień wartość TELEGRAM_CHAT_ID w pliku .env na ten ID",
+            "5. Zrestartuj aplikację (docker compose restart)",
+            "6. Przetestuj przez endpoint POST /telegram/test-message"
+        ],
+        "example_chat_id": 123456789,
+        "note": "CHAT_ID to liczba identyfikująca Ciebie jako użytkownika, NIE ID bota"
+    }
+    return instructions
+
+
+@app.get("/telegram/get-updates", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def get_telegram_updates(
+    request: Request,
+    telegram: TelegramService = Depends(get_telegram_service)
+):
+    """
+    Pobiera ostatnie wiadomości od użytkowników (do znalezienia CHAT_ID)
+    
+    Wysyła zapytanie getUpdates do Telegram API i zwraca ostatnie wiadomości.
+    Użyj tego aby znaleźć swój CHAT_ID po wysłaniu wiadomości do bota.
+    """
+    try:
+        updates = await telegram.get_updates(limit=10)
+        
+        if updates is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się pobrać wiadomości z Telegram API"
+            )
+        
+        if not updates:
+            return {
+                "success": True,
+                "message": "Brak wiadomości. Napisz /start do bota i spróbuj ponownie.",
+                "updates": []
+            }
+        
+        chat_ids = []
+        for update in updates:
+            if "message" in update:
+                msg = update["message"]
+                if "from" in msg:
+                    chat_ids.append({
+                        "chat_id": msg["from"]["id"],
+                        "username": msg["from"].get("username", "brak"),
+                        "first_name": msg["from"].get("first_name", ""),
+                        "text": msg.get("text", "")[:50]
+                    })
+        
+        return {
+            "success": True,
+            "message": f"Znaleziono {len(chat_ids)} wiadomości",
+            "chat_ids": chat_ids,
+            "raw_updates": updates,
+            "instructions": "Skopiuj 'chat_id' z powyższej listy do .env jako TELEGRAM_CHAT_ID"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting updates: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Błąd pobierania wiadomości: {str(e)}"
+        )
+
+
+@app.post("/telegram/test-connection", dependencies=[Depends(verify_api_key)])
+@limiter.limit("5/minute")
+async def test_telegram_connection(
+    request: Request,
+    telegram: TelegramService = Depends(get_telegram_service)
+):
+    """
+    Testuje połączenie z botem i możliwość wysyłania wiadomości
+    
+    Sprawdza czy bot działa i czy może wysłać wiadomość do podanego CHAT_ID.
+    """
+    try:
+        result = await telegram.test_connection_with_chat()
+        
+        if not result["bot_connected"]:
+            raise HTTPException(
+                status_code=500,
+                detail="Bot nie jest połączony. Sprawdź TELEGRAM_BOT_TOKEN."
+            )
+        
+        return {
+            "success": True,
+            "bot_connected": result["bot_connected"],
+            "bot_info": result["bot_info"],
+            "chat_test_sent": result["chat_test"],
+            "error": result["error"],
+            "message": "Test połączenia zakończony" if result["chat_test"] else "Błąd wysyłki do CHAT_ID"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error testing connection: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Błąd testowania połączenia: {str(e)}"
+        )
+
+
+@app.get("/telegram/statistics", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def get_telegram_statistics(
+    request: Request,
+    db: Database = Depends(get_database),
+    telegram: TelegramService = Depends(get_telegram_service)
+):
+    """
+    Pobiera statystyki wysłanych wiadomości Telegram
+    
+    Returns:
+        - today: Liczba wiadomości wysłanych dzisiaj
+        - week: Liczba wiadomości z ostatnich 7 dni
+        - botConnected: Status połączenia z botem
+        - lastMessage: Ostatnia wysłana wiadomość (timestamp i treść)
+    """
+    try:
+        from datetime import timedelta
+        
+        logger.info("Getting Telegram statistics")
+        
+        # Sprawdź połączenie z botem
+        bot_connected = await telegram.check_connection()
+        
+        # Pobierz logi telegram z ostatnich 7 dni
+        all_logs = db.get_activity_logs_by_type('telegram', limit=1000)
+        
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = now - timedelta(days=7)
+        
+        today_count = 0
+        week_count = 0
+        last_message = None
+        
+        for log in all_logs:
+            log_time = datetime.fromisoformat(log['timestamp'])
+            
+            if log_time >= today_start:
+                today_count += 1
+            if log_time >= week_ago:
+                week_count += 1
+            
+            if not last_message and log['status'] == 'success':
+                last_message = {
+                    'timestamp': log['timestamp'],
+                    'message': log['message']
+                }
+        
+        logger.info(f"Telegram statistics: today={today_count}, week={week_count}, connected={bot_connected}")
+        
+        return {
+            'today': today_count,
+            'week': week_count,
+            'botConnected': bot_connected,
+            'lastMessage': last_message
+        }
+    except Exception as e:
+        logger.error(f"Error getting Telegram statistics: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/telegram/settings", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def get_telegram_settings(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Pobiera aktualne ustawienia powiadomień Telegram
+    
+    Returns:
+        Dict z ustawieniami powiadomień
+    """
+    try:
+        settings = db.get_telegram_settings()
+        mute_status = db.get_mute_status()
+        
+        return {
+            'success': True,
+            'settings': settings,
+            'mute_status': mute_status
+        }
+    except Exception as e:
+        logger.error(f"Error getting telegram settings: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/telegram/settings", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def update_telegram_settings(
+    request: Request,
+    settings: Dict[str, Any],
+    db: Database = Depends(get_database)
+):
+    """
+    Aktualizuje ustawienia powiadomień Telegram
+    
+    Body może zawierać:
+    - notifications_enabled: bool
+    - allowed_hours_start: str (format HH:MM)
+    - allowed_hours_end: str (format HH:MM)
+    - allowed_days: str (np. "1,2,3,4,5" dla Pn-Pt)
+    """
+    try:
+        allowed_fields = [
+            'notifications_enabled',
+            'allowed_hours_start',
+            'allowed_hours_end',
+            'allowed_days'
+        ]
+        
+        updates = {k: v for k, v in settings.items() if k in allowed_fields}
+        
+        if not updates:
+            raise HTTPException(
+                status_code=400,
+                detail="Brak prawidłowych pól do aktualizacji"
+            )
+        
+        success = db.update_telegram_settings(updates)
+        
+        if success:
+            new_settings = db.get_telegram_settings()
+            return {
+                'success': True,
+                'message': 'Ustawienia zaktualizowane',
+                'settings': new_settings
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się zaktualizować ustawień"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating telegram settings: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/telegram/mute", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def mute_telegram_notifications(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Wycisza powiadomienia Telegram na określony czas
+    
+    Body: {"duration": "1h|4h|8h|12h|24h"}
+    """
+    try:
+        from datetime import timedelta
+        
+        body = await request.json()
+        duration = body.get('duration')
+        
+        duration_map = {
+            '1h': timedelta(hours=1),
+            '4h': timedelta(hours=4),
+            '8h': timedelta(hours=8),
+            '12h': timedelta(hours=12),
+            '24h': timedelta(hours=24),
+            '1d': timedelta(days=1)
+        }
+        
+        if duration not in duration_map:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nieprawidłowy duration. Dozwolone: {list(duration_map.keys())}"
+            )
+        
+        muted_until = datetime.now() + duration_map[duration]
+        muted_until_str = muted_until.isoformat()
+        
+        success = db.set_mute_until(muted_until_str)
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Powiadomienia wyciszone na {duration}',
+                'muted_until': muted_until_str
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się wyciszyć powiadomień"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error muting notifications: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/telegram/unmute", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def unmute_telegram_notifications(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Wyłącza wyciszenie powiadomień Telegram
+    """
+    try:
+        success = db.set_mute_until(None)
+        
+        if success:
+            return {
+                'success': True,
+                'message': 'Wyciszenie wyłączone'
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się wyłączyć wyciszenia"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unmuting notifications: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/telegram/toggle", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def toggle_telegram_notifications(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Przełącza powiadomienia Telegram ON/OFF
+    
+    Returns:
+        Nowy stan powiadomień
+    """
+    try:
+        new_state = db.toggle_telegram_notifications()
+        
+        return {
+            'success': True,
+            'enabled': new_state,
+            'message': f"Powiadomienia {'włączone' if new_state else 'wyłączone'}"
+        }
+            
+    except Exception as e:
+        logger.error(f"Error toggling notifications: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -462,6 +886,248 @@ async def get_strategy_signals(
     except Exception as e:
         logger.error(f"Error getting signals for strategy {strategy_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== CHART DATA ENDPOINTS =====
+
+@app.get("/chart-data", dependencies=[Depends(verify_api_key)])
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
+async def get_chart_data(
+    request: Request,
+    symbol: str = Query(..., description="Symbol (np. EUR/USD, AAPL/USD)"),
+    timeframe: str = Query("1h", description="Timeframe (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w)"),
+    period: str = Query("1mo", description="Okres danych (1d, 5d, 1mo, 3mo, 6mo, 1y)")
+):
+    """
+    Pobiera dane OHLCV oraz wskaźniki techniczne dla wykresów
+    
+    Ten endpoint zwraca dane w formacie kompatybilnym z TradingView Lightweight Charts:
+    - Świece OHLC z Unix timestamp
+    - Wskaźniki techniczne: RSI, MACD, Bollinger Bands, Moving Averages
+    - Aktualną cenę
+    
+    Args:
+        symbol: Symbol do analizy (np. EUR/USD, AAPL/USD)
+        timeframe: Interwał czasowy świec (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w)
+        period: Okres historyczny danych (1d, 5d, 1mo, 3mo, 6mo, 1y)
+    
+    Returns:
+        JSON z danymi OHLCV, wskaźnikami i aktualną ceną
+    """
+    try:
+        # Import serwisu do pobierania danych rynkowych
+        from .services.market_data_service import MarketDataService
+        
+        logger.info(f"Fetching chart data: {symbol} ({timeframe}, {period})")
+        
+        # Walidacja timeframe - sprawdzamy czy podany timeframe jest prawidłowy
+        valid_timeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w']
+        if timeframe not in valid_timeframes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nieprawidłowy timeframe. Dozwolone: {', '.join(valid_timeframes)}"
+            )
+        
+        # Walidacja period - sprawdzamy czy podany okres jest prawidłowy
+        valid_periods = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y']
+        if period not in valid_periods:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nieprawidłowy period. Dozwolone: {', '.join(valid_periods)}"
+            )
+        
+        # Tworzymy instancję serwisu do pobierania danych rynkowych
+        market_service = MarketDataService()
+        
+        # Pobieramy historyczne dane OHLCV (Open, High, Low, Close, Volume)
+        # await - czekamy na zakończenie asynchronicznego pobierania danych
+        data = await market_service.get_historical_data(
+            symbol=symbol,
+            timeframe=timeframe,
+            period=period
+        )
+        
+        # Jeśli nie udało się pobrać danych, zwracamy błąd 404
+        if data is None or data.empty:
+            logger.warning(f"No data available for {symbol}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Brak danych dla symbolu {symbol}. Sprawdź czy symbol jest prawidłowy."
+            )
+        
+        logger.info(f"Retrieved {len(data)} candles for {symbol}")
+        
+        # ===== FORMATOWANIE DANYCH DO FORMATU LIGHTWEIGHT CHARTS =====
+        
+        # Konwertujemy DataFrame pandas na listę świec w formacie dla Lightweight Charts
+        # Każda świeca to słownik z time (Unix timestamp) i wartościami OHLC
+        candles = []
+        for index, row in data.iterrows():
+            # Konwertujemy datetime index na Unix timestamp (sekundy od 1970-01-01)
+            # Lightweight Charts wymaga timestampu w sekundach, nie milisekundach
+            timestamp = int(index.timestamp())
+            
+            candles.append({
+                "time": timestamp,  # Unix timestamp w sekundach
+                "open": float(row['Open']),    # Cena otwarcia
+                "high": float(row['High']),    # Najwyższa cena
+                "low": float(row['Low']),      # Najniższa cena
+                "close": float(row['Close'])   # Cena zamknięcia
+            })
+        
+        # ===== OBLICZANIE WSKAŹNIKÓW TECHNICZNYCH =====
+        
+        # Inicjalizujemy słownik dla wszystkich wskaźników
+        indicators = {
+            "rsi": [],
+            "macd": {
+                "macd_line": [],
+                "signal_line": [],
+                "histogram": []
+            },
+            "bollinger": {
+                "upper": [],
+                "middle": [],
+                "lower": []
+            },
+            "sma50": [],
+            "sma200": []
+        }
+        
+        # --- RSI (Relative Strength Index) ---
+        # RSI mierzy siłę trendu (0-100), oversold < 30, overbought > 70
+        try:
+            # Obliczamy RSI dla każdego punktu w czasie
+            for i in range(14, len(data)):  # RSI wymaga minimum 14 świec
+                # Bierzemy ostatnie 15 świec (14 + aktualna)
+                subset = data.iloc[max(0, i-14):i+1]
+                rsi_value = market_service.calculate_rsi(subset, period=14)
+                
+                if rsi_value is not None:
+                    timestamp = int(data.index[i].timestamp())
+                    indicators["rsi"].append({
+                        "time": timestamp,
+                        "value": float(rsi_value)
+                    })
+        except Exception as e:
+            logger.warning(f"Error calculating RSI: {e}")
+        
+        # --- MACD (Moving Average Convergence Divergence) ---
+        # MACD pokazuje momentum trendu przez różnicę między szybką i wolną EMA
+        try:
+            # MACD wymaga minimum 26 + 9 = 35 świec
+            for i in range(35, len(data)):
+                subset = data.iloc[:i+1]
+                macd_data = market_service.calculate_macd(
+                    subset,
+                    fast_period=12,
+                    slow_period=26,
+                    signal_period=9
+                )
+                
+                if macd_data:
+                    timestamp = int(data.index[i].timestamp())
+                    indicators["macd"]["macd_line"].append({
+                        "time": timestamp,
+                        "value": float(macd_data['value'])
+                    })
+                    indicators["macd"]["signal_line"].append({
+                        "time": timestamp,
+                        "value": float(macd_data['signal'])
+                    })
+                    indicators["macd"]["histogram"].append({
+                        "time": timestamp,
+                        "value": float(macd_data['histogram'])
+                    })
+        except Exception as e:
+            logger.warning(f"Error calculating MACD: {e}")
+        
+        # --- Bollinger Bands ---
+        # Bollinger Bands pokazują zmienność ceny (upper/middle/lower bands)
+        try:
+            # Bollinger wymaga minimum 20 świec
+            for i in range(20, len(data)):
+                subset = data.iloc[max(0, i-20):i+1]
+                bb_data = market_service.calculate_bollinger_bands(
+                    subset,
+                    period=20,
+                    std_dev=2.0
+                )
+                
+                if bb_data:
+                    timestamp = int(data.index[i].timestamp())
+                    indicators["bollinger"]["upper"].append({
+                        "time": timestamp,
+                        "value": float(bb_data['upper'])
+                    })
+                    indicators["bollinger"]["middle"].append({
+                        "time": timestamp,
+                        "value": float(bb_data['middle'])
+                    })
+                    indicators["bollinger"]["lower"].append({
+                        "time": timestamp,
+                        "value": float(bb_data['lower'])
+                    })
+        except Exception as e:
+            logger.warning(f"Error calculating Bollinger Bands: {e}")
+        
+        # --- Moving Averages (SMA 50 i SMA 200) ---
+        # Moving Averages pokazują średni trend ceny
+        try:
+            # SMA 50 - średnia z ostatnich 50 świec
+            for i in range(50, len(data)):
+                subset = data.iloc[max(0, i-50):i+1]
+                close_prices = subset['Close']
+                sma50_value = float(close_prices.mean())
+                
+                timestamp = int(data.index[i].timestamp())
+                indicators["sma50"].append({
+                    "time": timestamp,
+                    "value": sma50_value
+                })
+            
+            # SMA 200 - średnia z ostatnich 200 świec (długoterminowy trend)
+            for i in range(200, len(data)):
+                subset = data.iloc[max(0, i-200):i+1]
+                close_prices = subset['Close']
+                sma200_value = float(close_prices.mean())
+                
+                timestamp = int(data.index[i].timestamp())
+                indicators["sma200"].append({
+                    "time": timestamp,
+                    "value": sma200_value
+                })
+        except Exception as e:
+            logger.warning(f"Error calculating Moving Averages: {e}")
+        
+        # Pobieramy aktualną cenę (ostatnia cena zamknięcia)
+        current_price = float(data['Close'].iloc[-1])
+        
+        # Zwracamy kompletne dane w formacie JSON
+        result = {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "period": period,
+            "candles": candles,
+            "indicators": indicators,
+            "current_price": current_price,
+            "data_points": len(candles)
+        }
+        
+        logger.info(f"Chart data prepared: {len(candles)} candles, {len(indicators['rsi'])} RSI points")
+        
+        return result
+        
+    except HTTPException:
+        # Przepuszczamy HTTPException bez zmian (już mają odpowiedni status code)
+        raise
+    except Exception as e:
+        # Logujemy nieoczekiwane błędy i zwracamy 500
+        logger.error(f"Error fetching chart data for {symbol}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Błąd pobierania danych wykresu: {str(e)}"
+        )
 
 
 # ===== AI ANALYSIS ENDPOINTS (REFACTORED) =====

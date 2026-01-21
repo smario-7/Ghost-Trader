@@ -213,6 +213,29 @@ class Database:
                     (analysis_interval, notification_threshold, is_active)
                     VALUES (15, 60, 1)
                 """)
+            
+            # Tabela ustawień powiadomień Telegram
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS telegram_settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    notifications_enabled BOOLEAN DEFAULT 1,
+                    muted_until DATETIME NULL,
+                    allowed_hours_start TEXT DEFAULT '00:00',
+                    allowed_hours_end TEXT DEFAULT '23:59',
+                    allowed_days TEXT DEFAULT '1,2,3,4,5,6,7',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Inicjalizacja domyślnych ustawień Telegram jeśli nie istnieją
+            cursor.execute("SELECT COUNT(*) FROM telegram_settings")
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("""
+                    INSERT INTO telegram_settings 
+                    (notifications_enabled, allowed_hours_start, allowed_hours_end, allowed_days)
+                    VALUES (1, '00:00', '23:59', '1,2,3,4,5,6,7')
+                """)
     
     def check_connection(self) -> bool:
         """Sprawdza połączenie z bazą danych"""
@@ -992,3 +1015,130 @@ class Database:
                 logs.append(log)
             
             return logs
+    
+    # ===== OPERACJE NA USTAWIENIACH TELEGRAM =====
+    
+    def get_telegram_settings(self) -> Dict[str, Any]:
+        """
+        Pobiera ustawienia powiadomień Telegram
+        
+        Returns:
+            Słownik z ustawieniami
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM telegram_settings ORDER BY id DESC LIMIT 1
+            """)
+            
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'id': row['id'],
+                    'notifications_enabled': bool(row['notifications_enabled']),
+                    'muted_until': row['muted_until'],
+                    'allowed_hours_start': row['allowed_hours_start'],
+                    'allowed_hours_end': row['allowed_hours_end'],
+                    'allowed_days': row['allowed_days'],
+                    'created_at': row['created_at'],
+                    'updated_at': row['updated_at']
+                }
+            
+            return {
+                'notifications_enabled': True,
+                'muted_until': None,
+                'allowed_hours_start': '00:00',
+                'allowed_hours_end': '23:59',
+                'allowed_days': '1,2,3,4,5,6,7'
+            }
+    
+    def update_telegram_settings(self, updates: Dict[str, Any]) -> bool:
+        """
+        Aktualizuje ustawienia powiadomień Telegram
+        
+        Args:
+            updates: Słownik z polami do aktualizacji
+        
+        Returns:
+            True jeśli zaktualizowano
+        """
+        if not updates:
+            return False
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT id FROM telegram_settings ORDER BY id DESC LIMIT 1")
+            row = cursor.fetchone()
+            
+            if row:
+                set_clause = ", ".join([f"{key} = ?" for key in updates.keys()])
+                set_clause += ", updated_at = CURRENT_TIMESTAMP"
+                values = list(updates.values()) + [row['id']]
+                
+                cursor.execute(f"""
+                    UPDATE telegram_settings SET {set_clause}
+                    WHERE id = ?
+                """, values)
+            else:
+                columns = list(updates.keys())
+                placeholders = ", ".join(["?" for _ in columns])
+                column_names = ", ".join(columns)
+                
+                cursor.execute(f"""
+                    INSERT INTO telegram_settings ({column_names})
+                    VALUES ({placeholders})
+                """, list(updates.values()))
+            
+            return True
+    
+    def set_mute_until(self, muted_until: Optional[str]) -> bool:
+        """
+        Ustawia wyciszenie powiadomień do określonej daty
+        
+        Args:
+            muted_until: Data do której wyciszyć (format ISO) lub None aby wyłączyć
+        
+        Returns:
+            True jeśli zaktualizowano
+        """
+        return self.update_telegram_settings({'muted_until': muted_until})
+    
+    def get_mute_status(self) -> Dict[str, Any]:
+        """
+        Pobiera status wyciszenia
+        
+        Returns:
+            Słownik z informacją o wyciszeniu
+        """
+        settings = self.get_telegram_settings()
+        
+        is_muted = False
+        muted_until = settings.get('muted_until')
+        
+        if muted_until:
+            try:
+                from datetime import datetime
+                muted_date = datetime.fromisoformat(muted_until.replace('Z', '+00:00'))
+                is_muted = datetime.now() < muted_date
+            except:
+                is_muted = False
+        
+        return {
+            'is_muted': is_muted,
+            'muted_until': muted_until,
+            'notifications_enabled': settings.get('notifications_enabled', True)
+        }
+    
+    def toggle_telegram_notifications(self) -> bool:
+        """
+        Przełącza stan powiadomień Telegram (ON/OFF)
+        
+        Returns:
+            Nowy stan (True = włączone, False = wyłączone)
+        """
+        settings = self.get_telegram_settings()
+        new_state = not settings.get('notifications_enabled', True)
+        self.update_telegram_settings({'notifications_enabled': new_state})
+        return new_state

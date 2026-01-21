@@ -24,6 +24,61 @@ class TelegramService:
         self.logger = logging.getLogger("trading_bot.telegram")
         self.database = database
     
+    def should_send_notification(self) -> tuple:
+        """
+        Sprawdza czy można wysłać powiadomienie na podstawie ustawień
+        
+        Returns:
+            tuple: (can_send: bool, reason: str) - czy wysłać i powód
+        """
+        if not self.database:
+            return True, "OK - brak bazy danych"
+        
+        try:
+            settings = self.database.get_telegram_settings()
+            
+            if not settings.get('notifications_enabled', True):
+                return False, "Powiadomienia wyłączone"
+            
+            muted_until = settings.get('muted_until')
+            if muted_until:
+                from datetime import datetime
+                try:
+                    muted_date = datetime.fromisoformat(muted_until.replace('Z', '+00:00'))
+                    if datetime.now() < muted_date:
+                        return False, f"Wyciszone do {muted_until}"
+                except:
+                    pass
+            
+            from datetime import datetime
+            now_time = datetime.now().time()
+            
+            try:
+                start_time = datetime.strptime(settings.get('allowed_hours_start', '00:00'), '%H:%M').time()
+                end_time = datetime.strptime(settings.get('allowed_hours_end', '23:59'), '%H:%M').time()
+                
+                if not (start_time <= now_time <= end_time):
+                    return False, f"Poza godzinami ({start_time.strftime('%H:%M')}-{end_time.strftime('%H:%M')})"
+            except:
+                pass
+            
+            today = datetime.now().isoweekday()
+            allowed_days_str = settings.get('allowed_days', '1,2,3,4,5,6,7')
+            
+            try:
+                allowed_days = [int(d.strip()) for d in allowed_days_str.split(',') if d.strip()]
+                if today not in allowed_days:
+                    days_names = ['Pn', 'Wt', 'Śr', 'Czw', 'Pt', 'Sb', 'Nd']
+                    return False, f"Dzień tygodnia nie dozwolony ({days_names[today-1]})"
+            except:
+                pass
+            
+            return True, "OK"
+            
+        except Exception as e:
+            self.logger.error(f"Błąd sprawdzania ustawień powiadomień: {e}")
+            return True, "OK - błąd sprawdzania ustawień"
+    
     async def send_message(
         self,
         text: str,
@@ -90,6 +145,21 @@ class TelegramService:
         Returns:
             True jeśli wysłano pomyślnie
         """
+        can_send, reason = self.should_send_notification()
+        
+        if not can_send:
+            self.logger.info(f"Pominięto powiadomienie Telegram: {reason}")
+            if self.database:
+                self.database.create_activity_log(
+                    log_type='telegram',
+                    message=f"Powiadomienie pominięte: {reason}",
+                    symbol=symbol,
+                    strategy_name=strategy_name,
+                    details={'signal_type': signal_type, 'reason': reason},
+                    status='info'
+                )
+            return True
+        
         # Emoji dla różnych typów sygnałów
         emoji_map = {
             "BUY": "🟢",
@@ -275,6 +345,67 @@ class TelegramService:
         except Exception as e:
             self.logger.error(f"Failed to send photo: {e}")
             return False
+    
+    async def get_updates(self, limit: int = 10) -> Optional[list]:
+        """
+        Pobiera ostatnie wiadomości od użytkowników
+        Użyteczne do znalezienia CHAT_ID
+        
+        Args:
+            limit: Maksymalna liczba wiadomości do pobrania
+        
+        Returns:
+            Lista wiadomości lub None
+        """
+        url = f"{self.base_url}/getUpdates"
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params={"limit": limit}, timeout=10) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data.get("ok"):
+                            return data.get("result", [])
+                    return None
+        except Exception as e:
+            self.logger.error(f"Failed to get updates: {e}")
+            return None
+    
+    async def test_connection_with_chat(self) -> Dict[str, Any]:
+        """
+        Testuje połączenie z botem i chatem
+        Zwraca szczegółowe informacje o statusie
+        
+        Returns:
+            Dict z informacjami o teście
+        """
+        result = {
+            "bot_connected": False,
+            "bot_info": None,
+            "chat_test": False,
+            "error": None
+        }
+        
+        try:
+            bot_info = await self.get_bot_info()
+            if bot_info:
+                result["bot_connected"] = True
+                result["bot_info"] = {
+                    "username": bot_info.get("username"),
+                    "first_name": bot_info.get("first_name"),
+                    "id": bot_info.get("id")
+                }
+            
+            test_sent = await self.send_message("🧪 Test połączenia - Ghost Trader Bot")
+            result["chat_test"] = test_sent
+            
+            if not test_sent:
+                result["error"] = "Nie udało się wysłać wiadomości testowej. Sprawdź CHAT_ID."
+                
+        except Exception as e:
+            result["error"] = str(e)
+        
+        return result
     
     def format_markdown(self, text: str) -> str:
         """

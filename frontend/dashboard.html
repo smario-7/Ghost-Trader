@@ -4,761 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trading Bot - Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        }
-
-        h1 {
-            color: white;
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #334155;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .card h2 {
-            color: #f1f5f9;
-            font-size: 18px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card h2::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 20px;
-            background: #667eea;
-            border-radius: 2px;
-        }
-
-        .model-selector {
-            margin-bottom: 20px;
-        }
-
-        .model-selector select {
-            width: 100%;
-            padding: 12px;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 8px;
-            color: #e2e8f0;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .model-selector select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .model-info {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-top: 8px;
-            padding: 8px;
-            background: #0f172a;
-            border-radius: 6px;
-        }
-
-        .signal {
-            background: #0f172a;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid #10b981;
-        }
-
-        .signal.sell {
-            border-left-color: #ef4444;
-        }
-
-        .signal.hold {
-            border-left-color: #f59e0b;
-        }
-
-        .signal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .signal-type {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .signal-type.buy {
-            color: #10b981;
-        }
-
-        .signal-type.sell {
-            color: #ef4444;
-        }
-
-        .signal-type.hold {
-            color: #f59e0b;
-        }
-
-        .confidence {
-            background: #475569;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .confidence.high {
-            background: #10b981;
-            color: white;
-        }
-
-        .confidence.medium {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .signal-details {
-            font-size: 13px;
-            line-height: 1.6;
-            color: #cbd5e1;
-        }
-
-        .signal-details strong {
-            color: #f1f5f9;
-        }
-
-        .sl-tp {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #334155;
-        }
-
-        .sl-tp-item {
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 6px;
-        }
-
-        .sl-tp-label {
-            font-size: 11px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .sl-tp-value {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .sl-tp-value.sl {
-            color: #ef4444;
-        }
-
-        .sl-tp-value.tp {
-            color: #10b981;
-        }
-
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #334155;
-        }
-
-        .stat:last-child {
-            border-bottom: none;
-        }
-
-        .stat-label {
-            color: #94a3b8;
-            font-size: 13px;
-        }
-
-        .stat-value {
-            color: #f1f5f9;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-badge.active {
-            background: #10b981;
-            color: white;
-        }
-
-        .status-badge.inactive {
-            background: #64748b;
-            color: white;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px 24px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: #5568d3;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #1e293b;
-            border: 1px solid #475569;
-        }
-
-        .btn-secondary:hover {
-            background: #334155;
-        }
-
-        .alert {
-            background: #0f172a;
-            border-left: 4px solid #3b82f6;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert h3 {
-            color: #3b82f6;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .alert p {
-            color: #cbd5e1;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-        }
-
-        code {
-            background: #0f172a;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #3b82f6;
-        }
-
-        .risk-indicator {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-        }
-
-        .risk-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #334155;
-        }
-
-        .risk-dot.active {
-            background: #ef4444;
-        }
-
-        .risk-dot.active.medium {
-            background: #f59e0b;
-        }
-
-        .risk-dot.active.low {
-            background: #10b981;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .table th, .table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-            color: #e2e8f0;
-        }
-
-        .table th {
-            background: #0f172a;
-            font-weight: 600;
-            color: #f1f5f9;
-        }
-
-        .table tr:hover {
-            background: #0f172a;
-        }
-
-        .activity-item {
-            background: #0f172a;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .activity-item.no-signal {
-            border-color: #475569;
-            opacity: 0.8;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            overflow: auto;
-        }
-
-        .modal.show {
-            display: block;
-        }
-
-        .modal-content {
-            background: #1e293b;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 600px;
-            border: 1px solid #334155;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .close {
-            color: #94a3b8;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #e2e8f0;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #e2e8f0;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 8px;
-            color: #e2e8f0;
-            font-size: 14px;
-        }
-
-        .form-group input[type="checkbox"] {
-            width: auto;
-        }
-
-        .parameters-group {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .parameters-group label {
-            font-size: 13px;
-        }
-
-        .error {
-            background: #7f1d1d;
-            color: #fca5a5;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border-left: 4px solid #ef4444;
-        }
-
-        .success {
-            background: #14532d;
-            color: #86efac;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border-left: 4px solid #10b981;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #334155;
-        }
-
-        .stat-card-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .stat-card-label {
-            color: #94a3b8;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .symbols-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .symbol-badge {
-            background: #667eea;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .refresh-indicator {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-left: 10px;
-        }
-
-        .btn-small {
-            width: auto;
-            padding: 8px 16px;
-            font-size: 12px;
-            margin: 2px;
-        }
-
-        .btn-danger {
-            background: #ef4444;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        /* Analysis Result Item */
-        .analysis-result-item {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .analysis-result-item:hover {
-            border-color: #3b82f6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-
-        .analysis-result-item.buy {
-            border-left: 4px solid #10b981;
-        }
-
-        .analysis-result-item.sell {
-            border-left: 4px solid #ef4444;
-        }
-
-        .analysis-result-item.hold {
-            border-left: 4px solid #f59e0b;
-        }
-
-        .analysis-result-item.no_signal {
-            border-left: 4px solid #64748b;
-        }
-
-        /* Signal Badges */
-        .signal-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .signal-badge.buy {
-            background: #10b98120;
-            color: #10b981;
-        }
-
-        .signal-badge.sell {
-            background: #ef444420;
-            color: #ef4444;
-        }
-
-        .signal-badge.hold {
-            background: #f59e0b20;
-            color: #f59e0b;
-        }
-
-        .signal-badge.no_signal {
-            background: #64748b20;
-            color: #94a3b8;
-        }
-
-        /* Agreement Badges */
-        .agreement-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .agreement-badge.high {
-            background: #10b98120;
-            color: #10b981;
-        }
-
-        .agreement-badge.medium {
-            background: #f59e0b20;
-            color: #f59e0b;
-        }
-
-        .agreement-badge.low {
-            background: #ef444420;
-            color: #ef4444;
-        }
-
-        /* Vote Items */
-        .vote-item {
-            background: #0f172a;
-            padding: 8px;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .vote-label {
-            font-size: 11px;
-            color: #64748b;
-            text-transform: uppercase;
-        }
-
-        .vote-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: #f1f5f9;
-        }
-
-        .vote-confidence {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        /* Modal Large */
-        .modal-large {
-            max-width: 900px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-tabs {
-            display: flex;
-            gap: 8px;
-            border-bottom: 2px solid #334155;
-            margin-bottom: 20px;
-        }
-
-        .modal-tab {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .modal-tab:hover {
-            color: #e2e8f0;
-        }
-
-        .modal-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        /* Symbols Selector */
-        .symbols-selector {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .symbols-groups {
-            margin-top: 15px;
-        }
-
-        .symbol-group {
-            margin-bottom: 20px;
-        }
-
-        .symbol-group h4 {
-            color: #f1f5f9;
-            font-size: 14px;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #334155;
-        }
-
-        .symbol-group label {
-            display: block;
-            padding: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-radius: 4px;
-            color: #e2e8f0;
-            font-size: 13px;
-        }
-
-        .symbol-group label:hover {
-            background: #1e293b;
-        }
-
-        .symbol-group label input[type="checkbox"] {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
-        /* Scrollbar styling dla symbols-selector */
-        .symbols-selector::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .symbols-selector::-webkit-scrollbar-track {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-
-        .symbols-selector::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-        }
-
-        .symbols-selector::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-
-        /* Refresh indicator animation */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .refresh-indicator {
-            animation: fadeIn 0.3s ease-in;
-        }
-    </style>
+    
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Utils -->
+    <script src="js/utils/api.js"></script>
+    
+    <!-- Components -->
+    <script src="js/components/dashboard.js"></script>
+    <script src="js/components/strategies.js"></script>
+    <script src="js/components/ai-analysis.js"></script>
+    <script src="js/components/charts.js"></script>
+    
+    <!-- Main App -->
+    <script src="js/main.js"></script>
 </head>
 <body>
     <div class="container">
@@ -790,6 +56,24 @@
             <button class="btn" @click="checkBackendConnection()" style="background: #f59e0b;">🔄 Sprawdź połączenie ponownie</button>
         </div>
 
+        <!-- Nawigacja zakładek -->
+        <div class="tabs-navigation">
+            <button class="tab-button" :class="{'active': currentView === 'dashboard'}" @click="currentView = 'dashboard'">
+                📊 Dashboard
+            </button>
+            <button class="tab-button" :class="{'active': currentView === 'strategies'}" @click="currentView = 'strategies'">
+                📋 Strategie
+            </button>
+            <button class="tab-button" :class="{'active': currentView === 'ai-analysis'}" @click="currentView = 'ai-analysis'">
+                🧠 AI Analiza
+            </button>
+            <button class="tab-button" :class="{'active': currentView === 'charts'}" @click="currentView = 'charts'; if (!chartInitialized) { setTimeout(() => initChart(), 200); }">
+                📈 Wykresy
+            </button>
+        </div>
+
+        <!-- Dashboard View -->
+        <div x-show="currentView === 'dashboard'">
         <div class="grid">
             <!-- Konfiguracja AI -->
             <div class="card">
@@ -1014,26 +298,26 @@
                 <template x-if="!loading.strategies && strategies.length === 0">
                     <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak strategii. Dodaj pierwszą strategię.</p>
                 </template>
-                <template x-if="!loading.strategies && strategies.length > 0">
-                    <template x-for="strategy in strategies" :key="strategy.id">
-                        <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div>
-                                    <strong style="color: #f1f5f9;" x-text="strategy.name"></strong>
-                                    <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="strategy.strategy_type"></span>
+                    <template x-if="!loading.strategies && strategies.length > 0">
+                        <template x-for="strategy in strategies" :key="strategy.id">
+                            <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #f1f5f9;" x-text="strategy.name"></strong>
+                                        <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="strategy.strategy_type"></span>
+                                    </div>
+                                    <span class="status-badge" :class="strategy.is_active ? 'active' : 'inactive'" x-text="strategy.is_active ? 'ACTIVE' : 'INACTIVE'"></span>
                                 </div>
-                                <span class="status-badge" :class="strategy.is_active ? 'active' : 'inactive'" x-text="strategy.is_active ? 'ACTIVE' : 'INACTIVE'"></span>
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+                                    <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
+                                    <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
+                                </div>
                             </div>
-                            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
-                                <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
-                                <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
-                            </div>
-                        </div>
+                        </template>
                     </template>
-                </template>
             </div>
 
             <!-- Ostatnie Sygnały -->
@@ -1046,28 +330,28 @@
                 <template x-if="!loading.signals && signals.length === 0">
                     <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak sygnałów.</p>
                 </template>
-                <template x-if="!loading.signals && signals.length > 0">
-                    <template x-for="signal in signals" :key="signal.id">
-                        <div class="signal" :class="signal.signal_type.toLowerCase()">
-                            <div class="signal-header">
-                                <div class="signal-type" :class="signal.signal_type.toLowerCase()" x-text="signal.signal_type"></div>
-                                <span class="status-badge" :class="signal.signal_type === 'BUY' ? 'active' : signal.signal_type === 'SELL' ? 'inactive' : ''" x-text="signal.signal_type"></span>
-                            </div>
-                            <div class="signal-details">
-                                <p><strong>Strategia:</strong> <span x-text="signal.strategy_name"></span></p>
-                                <p><strong>Symbol:</strong> <span x-text="signal.symbol"></span> | <strong>Cena:</strong> $<span x-text="signal.price.toFixed(2)"></span></p>
-                                <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
-                                    <strong>Data:</strong> <span x-text="formatDate(signal.created_at)"></span>
-                                </p>
-                                <template x-if="Object.keys(signal.indicator_values || {}).length > 0">
+                    <template x-if="!loading.signals && signals.length > 0">
+                        <template x-for="signal in signals" :key="signal.id">
+                            <div class="signal" :class="signal.signal_type.toLowerCase()">
+                                <div class="signal-header">
+                                    <div class="signal-type" :class="signal.signal_type.toLowerCase()" x-text="signal.signal_type"></div>
+                                    <span class="status-badge" :class="signal.signal_type === 'BUY' ? 'active' : signal.signal_type === 'SELL' ? 'inactive' : ''" x-text="signal.signal_type"></span>
+                                </div>
+                                <div class="signal-details">
+                                    <p><strong>Strategia:</strong> <span x-text="signal.strategy_name"></span></p>
+                                    <p><strong>Symbol:</strong> <span x-text="signal.symbol"></span> | <strong>Cena:</strong> $<span x-text="signal.price.toFixed(2)"></span></p>
                                     <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
-                                        <strong>Wskaźniki:</strong> <span x-text="formatIndicators(signal.indicator_values)"></span>
+                                        <strong>Data:</strong> <span x-text="formatDate(signal.created_at)"></span>
                                     </p>
-                                </template>
+                                    <template x-if="Object.keys(signal.indicator_values || {}).length > 0">
+                                        <p style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+                                            <strong>Wskaźniki:</strong> <span x-text="formatIndicators(signal.indicator_values)"></span>
+                                        </p>
+                                    </template>
+                                </div>
                             </div>
-                        </div>
+                        </template>
                     </template>
-                </template>
             </div>
 
             <!-- Aktywność Bota -->
@@ -1080,33 +364,33 @@
                 <template x-if="!loading.activity && activity.length === 0">
                     <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak aktywności. Bot jeszcze nie sprawdził strategii.</p>
                 </template>
-                <template x-if="!loading.activity && activity.length > 0">
-                    <template x-for="result in activity" :key="result.strategy_id">
-                        <div class="activity-item" :class="(!result.signal || result.signal === 'HOLD') ? 'no-signal' : ''">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div>
-                                    <strong style="color: #f1f5f9;" x-text="result.strategy_name"></strong>
-                                    <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="result.symbol || 'N/A'"></span>
+                    <template x-if="!loading.activity && activity.length > 0">
+                        <template x-for="result in activity" :key="result.strategy_id">
+                            <div class="activity-item" :class="(!result.signal || result.signal === 'HOLD') ? 'no-signal' : ''">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #f1f5f9;" x-text="result.strategy_name"></strong>
+                                        <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="result.symbol || 'N/A'"></span>
+                                    </div>
+                                    <template x-if="result.signal && result.signal !== 'HOLD'">
+                                        <span class="status-badge" :class="result.signal === 'BUY' ? 'active' : 'inactive'" x-text="result.signal"></span>
+                                    </template>
+                                    <template x-if="!result.signal || result.signal === 'HOLD'">
+                                        <span style="color: #94a3b8; font-size: 12px;">Brak sygnału (HOLD)</span>
+                                    </template>
                                 </div>
-                                <template x-if="result.signal && result.signal !== 'HOLD'">
-                                    <span class="status-badge" :class="result.signal === 'BUY' ? 'active' : 'inactive'" x-text="result.signal"></span>
-                                </template>
-                                <template x-if="!result.signal || result.signal === 'HOLD'">
-                                    <span style="color: #94a3b8; font-size: 12px;">Brak sygnału (HOLD)</span>
-                                </template>
-                            </div>
-                            <div style="color: #94a3b8; font-size: 13px;">
-                                Sprawdzono: przed chwilą
-                                <template x-if="result.indicators">
-                                    <span> | Wskaźniki: <span x-text="formatIndicators(result.indicators)"></span></span>
+                                <div style="color: #94a3b8; font-size: 13px;">
+                                    Sprawdzono: przed chwilą
+                                    <template x-if="result.indicators">
+                                        <span> | Wskaźniki: <span x-text="formatIndicators(result.indicators)"></span></span>
+                                    </template>
+                                </div>
+                                <template x-if="result.message">
+                                    <div style="margin-top: 5px; font-size: 12px; color: #94a3b8; font-style: italic;" x-text="result.message"></div>
                                 </template>
                             </div>
-                            <template x-if="result.message">
-                                <div style="margin-top: 5px; font-size: 12px; color: #94a3b8; font-style: italic;" x-text="result.message"></div>
-                            </template>
-                        </div>
+                        </template>
                     </template>
-                </template>
             </div>
 
             <!-- Panel Wyników Analiz AI -->
@@ -1370,6 +654,145 @@
                 Trading wiąże się z ryzykiem utraty kapitału. Sygnały AI to narzędzie wspomagające, nie gwarancja zysku. 
                 Zawsze przeprowadzaj własną analizę i zarządzaj ryzykiem. Nie inwestuj więcej niż możesz stracić.
             </p>
+        </div>
+        </div>
+        <!-- Koniec Dashboard View -->
+
+        <!-- Strategies View -->
+        <div x-show="currentView === 'strategies'">
+            <div class="alert">
+                <h3>📋 Zarządzanie Strategiami</h3>
+                <p>Widok strategii - wszystkie funkcje CRUD dla strategii tradingowych.</p>
+            </div>
+        </div>
+
+        <!-- AI Analysis View -->
+        <div x-show="currentView === 'ai-analysis'">
+            <div class="alert">
+                <h3>🧠 Analiza AI</h3>
+                <p>Widok analiz AI - wyniki, statystyki tokenów, konfiguracja.</p>
+            </div>
+        </div>
+
+        <!-- Charts View -->
+        <div x-show="currentView === 'charts'" id="charts-view">
+            <!-- Kontrolki wykresu -->
+            <div class="chart-controls">
+                <!-- Symbol -->
+                <div class="control-group">
+                    <label>Symbol</label>
+                    <select x-model="chartSettings.symbol" @change="loadChartData()">
+                        <template x-for="symbol in getAllSymbolsList()" :key="symbol">
+                            <option :value="symbol" x-text="symbol"></option>
+                        </template>
+                    </select>
+                </div>
+                
+                <!-- Timeframe -->
+                <div class="control-group">
+                    <label>Timeframe</label>
+                    <select x-model="chartSettings.timeframe" @change="loadChartData()">
+                        <option value="1m">1 minuta</option>
+                        <option value="5m">5 minut</option>
+                        <option value="15m">15 minut</option>
+                        <option value="30m">30 minut</option>
+                        <option value="1h">1 godzina</option>
+                        <option value="4h">4 godziny</option>
+                        <option value="1d">1 dzień</option>
+                        <option value="1w">1 tydzień</option>
+                    </select>
+                </div>
+                
+                <!-- Period -->
+                <div class="control-group">
+                    <label>Okres</label>
+                    <select x-model="chartSettings.period" @change="loadChartData()">
+                        <option value="1d">1 dzień</option>
+                        <option value="5d">5 dni</option>
+                        <option value="1mo">1 miesiąc</option>
+                        <option value="3mo">3 miesiące</option>
+                        <option value="6mo">6 miesięcy</option>
+                        <option value="1y">1 rok</option>
+                    </select>
+                </div>
+                
+                <!-- Typ wykresu -->
+                <div class="control-group">
+                    <label>Typ wykresu</label>
+                    <div class="button-group">
+                        <button :class="{'active': chartSettings.type === 'candlestick'}" @click="setChartType('candlestick')">
+                            Świecowy
+                        </button>
+                        <button :class="{'active': chartSettings.type === 'line'}" @click="setChartType('line')">
+                            Liniowy
+                        </button>
+                        <button :class="{'active': chartSettings.type === 'bar'}" @click="setChartType('bar')">
+                            Słupkowy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Wskaźniki -->
+                <div class="control-group">
+                    <label>Wskaźniki</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" x-model="chartSettings.indicators.ma" @change="toggleIndicator('ma')">
+                            MA (50/200)
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="chartSettings.indicators.rsi" @change="toggleIndicator('rsi')">
+                            RSI
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="chartSettings.indicators.macd" @change="toggleIndicator('macd')">
+                            MACD
+                        </label>
+                        <label>
+                            <input type="checkbox" x-model="chartSettings.indicators.bollinger" @change="toggleIndicator('bollinger')">
+                            Bollinger
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Przycisk odświeżania -->
+                <button class="btn-refresh" @click="loadChartData()">
+                    🔄 Odśwież
+                </button>
+            </div>
+            
+            <!-- Aktualna cena -->
+            <div style="margin-bottom: 20px;" x-show="chartData.current_price">
+                <span class="current-price-badge">
+                    <span x-text="chartSettings.symbol"></span>:
+                    <span x-text="chartData.current_price ? chartData.current_price.toFixed(5) : '-'"></span>
+                </span>
+            </div>
+            
+            <!-- Główny wykres -->
+            <div class="chart-panel">
+                <h3>Wykres główny</h3>
+                <div x-show="chartLoading" class="chart-loading">Ładowanie danych...</div>
+                <div x-show="!chartLoading" id="main-chart" x-init="if (!chartInitialized && currentView === 'charts') { setTimeout(() => initChart(), 100); }"></div>
+            </div>
+            
+            <!-- Panel RSI -->
+            <div x-show="chartSettings.indicators.rsi" class="chart-panel">
+                <h3>RSI (Relative Strength Index)</h3>
+                <div id="rsi-chart"></div>
+            </div>
+            
+            <!-- Panel MACD -->
+            <div x-show="chartSettings.indicators.macd" class="chart-panel">
+                <h3>MACD</h3>
+                <div id="macd-chart"></div>
+            </div>
+            
+            <!-- Panel Bollinger Bands -->
+            <div x-show="chartSettings.indicators.bollinger" class="chart-panel">
+                <h3>Bollinger Bands</h3>
+                <div id="bollinger-chart"></div>
+            </div>
         </div>
     </div>
 
@@ -1652,755 +1075,5 @@
         </div>
     </div>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8000';
-
-        const modelInfo = {
-            'gpt-4o': 'GPT-4o: Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.',
-            'gpt-4o-mini': 'GPT-4o Mini: Szybszy i tańszy (~$0.0001/request). Dobry do prostych analiz. Czas: 1-3s.',
-            'gpt-4-turbo': 'GPT-4 Turbo: Głębsza analiza, więcej kontekstu. ~$0.01/request. Czas: 5-10s.',
-            'gpt-4': 'GPT-4: Klasyczny model, sprawdzony. ~$0.03/request. Czas: 5-10s.',
-            'gpt-3.5-turbo': 'GPT-3.5 Turbo: Najtańszy (~$0.0005/request). Podstawowa analiza. Czas: 1-2s.'
-        };
-
-        function tradingBot() {
-            return {
-                // Stan aplikacji
-                statistics: null,
-                strategies: [],
-                signals: [],
-                activity: [],
-                uniqueSymbols: [],
-                loading: {
-                    statistics: false,
-                    strategies: false,
-                    signals: false,
-                    activity: false,
-                    aiAnalysis: false,
-                    tokenStats: false,
-                    analysisConfig: false
-                },
-                errorMessage: '',
-                successMessage: '',
-                backendWarning: false,
-                apiKey: null,
-                lastUpdate: '-',
-                checkInterval: 15,
-                refreshIndicators: {
-                    stats: '',
-                    signals: '',
-                    activity: '',
-                    aiAnalysis: ''
-                },
-                
-                // AI
-                aiModel: 'gpt-4o',
-                modelInfoText: '<strong>GPT-4o:</strong> Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.',
-                lastAnalysis: '-',
-                apiCallsToday: 0,
-                
-                // Modal
-                modal: {
-                    open: false,
-                    mode: 'add',
-                    strategyId: null,
-                    formData: {
-                        name: '',
-                        strategy_type: '',
-                        symbol: '',
-                        timeframe: '1h',
-                        is_active: true
-                    },
-                    formParameters: {}
-                },
-                
-                // AI Analysis Results
-                aiAnalysisResults: [],
-                aiAnalysisFilter: {
-                    symbol: '',
-                    signal: ''
-                },
-                
-                // Token Statistics
-                tokenStats: {
-                    total_tokens: 0,
-                    total_cost: 0,
-                    analyses_count: 0,
-                    avg_tokens_per_analysis: 0,
-                    today_tokens: 0,
-                    today_cost: 0,
-                    today_analyses: 0
-                },
-                
-                // Analysis Config
-                analysisConfig: {
-                    interval: 15,
-                    notificationThreshold: 60,
-                    isActive: true,
-                    enabledSymbols: []
-                },
-                
-                // Symbols for multi-select
-                allSymbols: {
-                    forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CHF', 'USD/CAD', 'NZD/USD'],
-                    indices: ['SPX/USD', 'DJI/USD', 'IXIC/USD', 'RUT/USD'],
-                    stocks: ['AAPL/USD', 'MSFT/USD', 'GOOGL/USD', 'AMZN/USD', 'TSLA/USD', 'META/USD', 'NVDA/USD'],
-                    metals: ['XAU/USD', 'XAG/USD', 'XPT/USD', 'XPD/USD']
-                },
-                selectedSymbols: [],
-                selectAllSymbols: false,
-                
-                // Analysis Details Modal
-                analysisModal: {
-                    open: false,
-                    data: null,
-                    activeTab: 'ai'
-                },
-                
-                // SSE Connection
-                sseConnection: null,
-                
-                // Metody
-                async init() {
-                    try {
-                        await Promise.all([
-                            this.loadStatistics(),
-                            this.loadStrategies(),
-                            this.loadRecentSignals(),
-                            this.loadBotActivity(),
-                            this.loadAIAnalysisResults(),
-                            this.loadTokenStatistics(),
-                            this.loadAnalysisConfig()
-                        ]);
-                        this.updateLastUpdate();
-                        
-                        // Połącz SSE dla real-time updates
-                        this.connectSSE();
-                        
-                        // Automatyczne odświeżanie
-                        setInterval(() => {
-                            this.loadStatistics();
-                            this.loadRecentSignals();
-                            this.loadBotActivity();
-                            this.updateLastUpdate();
-                        }, 30000);
-                        
-                        setInterval(() => {
-                            this.loadStatistics();
-                            this.updateLastUpdate();
-                        }, 60000);
-                        
-                        // Aktualizacja czasu ostatniej analizy AI
-                        setInterval(() => {
-                            const now = new Date();
-                            this.lastAnalysis = now.toLocaleTimeString('pl-PL');
-                        }, 1000);
-                    } catch (error) {
-                        if (error.message && error.message.includes('Backend nie jest dostępny')) {
-                            this.showError(error.message);
-                        } else {
-                            this.showError(`Błąd inicjalizacji: ${error.message}`);
-                        }
-                    }
-                },
-                
-                async getApiKey() {
-                    if (!this.apiKey) {
-                        this.apiKey = sessionStorage.getItem('api_key') || prompt('Podaj API Key:');
-                        if (this.apiKey) {
-                            sessionStorage.setItem('api_key', this.apiKey);
-                        } else {
-                            throw new Error('API Key jest wymagany');
-                        }
-                    }
-                    return this.apiKey;
-                },
-                
-                async apiCall(endpoint, method = 'GET', body = null) {
-                    try {
-                        const key = await this.getApiKey();
-                        const options = {
-                            method,
-                            headers: {
-                                'X-API-Key': key,
-                                'Content-Type': 'application/json'
-                            }
-                        };
-                        if (body) options.body = JSON.stringify(body);
-                        
-                        const url = API_BASE === '/api' ? `${API_BASE}${endpoint}` : `${API_BASE}${endpoint}`;
-                        const response = await fetch(url, options);
-                        
-                        if (response.status === 403) {
-                            sessionStorage.removeItem('api_key');
-                            this.apiKey = null;
-                            throw new Error('Nieprawidłowy API Key. Podaj ponownie.');
-                        }
-                        
-                        if (response.status === 502) {
-                            throw new Error('Backend nie jest dostępny. Sprawdź czy backend działa w Dockerze (docker-compose ps)');
-                        }
-                        
-                        if (!response.ok) {
-                            const error = await response.json().catch(() => ({ detail: response.statusText }));
-                            throw new Error(error.detail || `HTTP ${response.status}`);
-                        }
-                        
-                        return await response.json();
-                    } catch (error) {
-                        if (error.message.includes('Failed to fetch') || 
-                            error.message.includes('ERR_CONNECTION_REFUSED') ||
-                            error.message.includes('ERR_CONNECTION_RESET') ||
-                            error.message.includes('ERR_SOCKET_NOT_CONNECTED') ||
-                            error.message.includes('Bad Gateway') ||
-                            error.message.includes('502')) {
-                            const friendlyError = new Error('Backend nie jest dostępny. Sprawdź czy backend działa w Dockerze (docker-compose ps)');
-                            friendlyError.name = 'ConnectionError';
-                            throw friendlyError;
-                        }
-                        if (error.name !== 'ConnectionError') {
-                            console.error('API Error:', error);
-                        }
-                        throw error;
-                    }
-                },
-                
-                async loadStatistics() {
-                    try {
-                        this.loading.statistics = true;
-                        const stats = await this.apiCall('/statistics');
-                        this.backendWarning = false;
-                        this.statistics = stats;
-                        this.uniqueSymbols = await this.loadUniqueSymbols();
-                        this.refreshIndicators.stats = '✓';
-                        setTimeout(() => this.refreshIndicators.stats = '', 2000);
-                    } catch (error) {
-                        this.showError(error.message);
-                        if (error.message.includes('Backend nie jest dostępny')) {
-                            return;
-                        }
-                    } finally {
-                        this.loading.statistics = false;
-                    }
-                },
-                
-                async loadUniqueSymbols() {
-                    try {
-                        const data = await this.apiCall('/strategies');
-                        return [...new Set(data.strategies.filter(s => s.is_active).map(s => s.symbol))];
-                    } catch {
-                        return [];
-                    }
-                },
-                
-                async loadStrategies() {
-                    try {
-                        this.loading.strategies = true;
-                        const data = await this.apiCall('/strategies');
-                        this.backendWarning = false;
-                        this.strategies = data.strategies || [];
-                    } catch (error) {
-                        this.showError(error.message);
-                        if (error.message.includes('Backend nie jest dostępny')) {
-                            return;
-                        }
-                    } finally {
-                        this.loading.strategies = false;
-                    }
-                },
-                
-                async loadRecentSignals() {
-                    try {
-                        this.loading.signals = true;
-                        const data = await this.apiCall('/signals/recent?limit=10');
-                        this.backendWarning = false;
-                        this.signals = data.signals || [];
-                        this.refreshIndicators.signals = '✓';
-                        setTimeout(() => this.refreshIndicators.signals = '', 2000);
-                    } catch (error) {
-                        this.showError(error.message);
-                        if (error.message.includes('Backend nie jest dostępny')) {
-                            return;
-                        }
-                    } finally {
-                        this.loading.signals = false;
-                    }
-                },
-                
-                async loadBotActivity() {
-                    try {
-                        this.loading.activity = true;
-                        const data = await this.apiCall('/check-signals', 'POST');
-                        this.backendWarning = false;
-                        this.activity = data.results || [];
-                        this.refreshIndicators.activity = '✓';
-                        setTimeout(() => this.refreshIndicators.activity = '', 2000);
-                    } catch (error) {
-                        this.showError(error.message);
-                        if (error.message.includes('Backend nie jest dostępny')) {
-                            return;
-                        }
-                    } finally {
-                        this.loading.activity = false;
-                    }
-                },
-                
-                async checkBackendConnection() {
-                    try {
-                        const healthUrl = API_BASE === '/api' ? '/api/health' : `${API_BASE}/health`;
-                        const response = await fetch(healthUrl);
-                        if (response.ok) {
-                            this.backendWarning = false;
-                            this.showSuccess('Połączenie z backendem przywrócone!');
-                            await this.init();
-                        } else {
-                            throw new Error('Backend odpowiada, ale zwraca błąd');
-                        }
-                    } catch (error) {
-                        this.showError('Backend nadal nie jest dostępny. Sprawdź czy serwer działa.');
-                    }
-                },
-                
-                updateModelInfo() {
-                    const info = modelInfo[this.aiModel] || '';
-                    this.modelInfoText = '<strong>' + this.aiModel.toUpperCase() + ':</strong> ' + info.split(': ')[1];
-                },
-                
-                async runAIAnalysis() {
-                    // Odśwież listę strategii przed analizą
-                    await this.loadStrategies();
-                    
-                    // Użyj pierwszej aktywnej strategii lub pierwszej strategii z listy
-                    const strategy = this.strategies.find(s => s.is_active) || this.strategies[0];
-                    
-                    console.log('Strategie:', this.strategies);
-                    console.log('Wybrana strategia:', strategy);
-                    
-                    if (!strategy) {
-                        this.showError('Brak strategii. Dodaj strategię aby uruchomić analizę AI.');
-                        return;
-                    }
-                    
-                    try {
-                        this.loading.strategies = true;
-                        
-                        // Pobierz API key
-                        const key = await this.getApiKey();
-                        
-                        // Zbuduj URL
-                        const url = API_BASE === '/api' 
-                            ? `/api/ai/analyze?symbol=${strategy.symbol}&timeframe=${strategy.timeframe}`
-                            : `${API_BASE}/ai/analyze?symbol=${strategy.symbol}&timeframe=${strategy.timeframe}`;
-                        
-                        // Wywołaj endpoint AI
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'X-API-Key': key,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        if (!response.ok) {
-                            const error = await response.json().catch(() => ({ detail: response.statusText }));
-                            throw new Error(error.detail || `HTTP ${response.status}`);
-                        }
-                        
-                        const result = await response.json();
-                        
-                        // Wyświetl wyniki analizy
-                        const recommendation = result.recommendation || 'HOLD';
-                        const confidence = result.confidence || 0;
-                        const reasoning = result.ai_analysis?.reasoning || 'Brak szczegółów';
-                        
-                        this.showSuccess(`✅ Analiza AI dla ${strategy.symbol}:\n${recommendation} (Pewność: ${confidence}%)\n\n${reasoning.substring(0, 150)}...`);
-                        
-                        // Zaktualizuj ostatnią analizę
-                        this.lastAnalysis = new Date().toLocaleTimeString('pl-PL');
-                        this.apiCallsToday += 1;
-                        
-                        // Odśwież dane
-                        await this.loadRecentSignals();
-                        await this.loadBotActivity();
-                        
-                    } catch (error) {
-                        console.error('AI Analysis error:', error);
-                        this.showError(`❌ Błąd analizy AI: ${error.message}`);
-                    } finally {
-                        this.loading.strategies = false;
-                    }
-                },
-                
-                openModal(mode, id = null) {
-                    this.modal.mode = mode;
-                    this.modal.strategyId = id;
-                    this.modal.open = true;
-                    
-                    if (mode === 'add') {
-                        this.modal.formData = {
-                            name: '',
-                            strategy_type: '',
-                            symbol: '',
-                            timeframe: '1h',
-                            is_active: true
-                        };
-                        this.modal.formParameters = {};
-                    } else if (mode === 'edit' && id) {
-                        this.loadStrategyForEdit(id);
-                    }
-                },
-                
-                async loadStrategyForEdit(id) {
-                    try {
-                        const data = await this.apiCall(`/strategies/${id}`);
-                        const strategy = data.strategy;
-                        
-                        this.modal.formData = {
-                            name: strategy.name,
-                            strategy_type: strategy.strategy_type,
-                            symbol: strategy.symbol,
-                            timeframe: strategy.timeframe,
-                            is_active: strategy.is_active
-                        };
-                        
-                        this.modal.formParameters = { ...strategy.parameters };
-                    } catch (error) {
-                        this.showError(`Błąd ładowania strategii: ${error.message}`);
-                    }
-                },
-                
-                updateParametersForm() {
-                    if (!this.modal.formData.strategy_type) {
-                        this.modal.formParameters = {};
-                        return;
-                    }
-                    
-                    const type = this.modal.formData.strategy_type;
-                    if (type === 'RSI' && !this.modal.formParameters.period) {
-                        this.modal.formParameters = { period: 14, oversold: 30, overbought: 70 };
-                    } else if (type === 'MACD' && !this.modal.formParameters.fast_period) {
-                        this.modal.formParameters = { fast_period: 12, slow_period: 26, signal_period: 9 };
-                    } else if (type === 'BOLLINGER_BANDS' && !this.modal.formParameters.period) {
-                        this.modal.formParameters = { period: 20, std_dev: 2 };
-                    } else if (type === 'MOVING_AVERAGE' && !this.modal.formParameters.short_period) {
-                        this.modal.formParameters = { short_period: 50, long_period: 200 };
-                    }
-                },
-                
-                closeModal() {
-                    this.modal.open = false;
-                    this.modal.formData = {
-                        name: '',
-                        strategy_type: '',
-                        symbol: '',
-                        timeframe: '1h',
-                        is_active: true
-                    };
-                    this.modal.formParameters = {};
-                },
-                
-                async saveStrategy() {
-                    try {
-                        const strategyData = {
-                            name: this.modal.formData.name,
-                            strategy_type: this.modal.formData.strategy_type,
-                            symbol: this.modal.formData.symbol,
-                            timeframe: this.modal.formData.timeframe,
-                            parameters: { ...this.modal.formParameters },
-                            is_active: this.modal.formData.is_active
-                        };
-                        
-                        if (this.modal.strategyId) {
-                            await this.apiCall(`/strategies/${this.modal.strategyId}`, 'PUT', strategyData);
-                            this.showSuccess('Strategia zaktualizowana pomyślnie');
-                        } else {
-                            await this.apiCall('/strategies', 'POST', strategyData);
-                            this.showSuccess('Strategia utworzona pomyślnie');
-                        }
-                        
-                        this.closeModal();
-                        await this.loadStrategies();
-                        await this.loadStatistics();
-                    } catch (error) {
-                        this.showError(`Błąd zapisywania: ${error.message}`);
-                    }
-                },
-                
-                async deleteStrategy(id) {
-                    if (!confirm('Czy na pewno chcesz usunąć tę strategię?')) {
-                        return;
-                    }
-                    
-                    try {
-                        await this.apiCall(`/strategies/${id}`, 'DELETE');
-                        this.showSuccess('Strategia usunięta pomyślnie');
-                        await this.loadStrategies();
-                        await this.loadStatistics();
-                    } catch (error) {
-                        this.showError(`Błąd usuwania: ${error.message}`);
-                    }
-                },
-                
-                showError(message) {
-                    this.errorMessage = message;
-                    this.backendWarning = message.includes('Backend nie jest dostępny');
-                    setTimeout(() => {
-                        this.errorMessage = '';
-                    }, 10000);
-                },
-
-                showSuccess(message) {
-                    this.successMessage = message;
-                    setTimeout(() => {
-                        this.successMessage = '';
-                    }, 10000);
-                },
-                
-                updateLastUpdate() {
-                    const now = new Date();
-                    this.lastUpdate = now.toLocaleTimeString('pl-PL');
-                },
-                
-                formatDate(dateString) {
-                    if (!dateString) return '';
-                    return new Date(dateString).toLocaleString('pl-PL');
-                },
-                
-                formatParameters(params) {
-                    if (!params) return '';
-                    const str = JSON.stringify(params);
-                    return str.length > 60 ? str.substring(0, 60) + '...' : str;
-                },
-                
-                formatIndicators(indicators) {
-                    if (!indicators) return '';
-                    return Object.entries(indicators)
-                        .map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toFixed(2) : v}`)
-                        .join(', ');
-                },
-                
-                // ===== AI ANALYSIS METHODS =====
-                
-                async loadAIAnalysisResults() {
-                    try {
-                        this.loading.aiAnalysis = true;
-                        const params = new URLSearchParams();
-                        if (this.aiAnalysisFilter.symbol) {
-                            params.append('symbol', this.aiAnalysisFilter.symbol);
-                        }
-                        params.append('limit', '50');
-                        
-                        const data = await this.apiCall(`/ai/analysis-results?${params}`);
-                        this.aiAnalysisResults = data.results || [];
-                        
-                        // Filtruj po sygnale (frontend)
-                        if (this.aiAnalysisFilter.signal) {
-                            this.aiAnalysisResults = this.aiAnalysisResults.filter(
-                                r => r.final_signal === this.aiAnalysisFilter.signal
-                            );
-                        }
-                        
-                        this.refreshIndicators.aiAnalysis = '✓';
-                        setTimeout(() => this.refreshIndicators.aiAnalysis = '', 2000);
-                    } catch (error) {
-                        this.showError(error.message);
-                    } finally {
-                        this.loading.aiAnalysis = false;
-                    }
-                },
-                
-                async loadTokenStatistics() {
-                    try {
-                        const data = await this.apiCall('/ai/token-statistics');
-                        this.tokenStats = data;
-                    } catch (error) {
-                        console.error('Error loading token stats:', error);
-                    }
-                },
-                
-                async loadAnalysisConfig() {
-                    try {
-                        const data = await this.apiCall('/ai/analysis-config');
-                        this.analysisConfig = {
-                            interval: data.analysis_interval,
-                            notificationThreshold: data.notification_threshold,
-                            isActive: data.is_active
-                        };
-                        this.selectedSymbols = data.enabled_symbols || [];
-                        this.selectAllSymbols = this.selectedSymbols.length === this.getAllSymbolsList().length;
-                    } catch (error) {
-                        console.error('Error loading analysis config:', error);
-                    }
-                },
-                
-                async updateAnalysisConfig() {
-                    try {
-                        await this.apiCall('/ai/analysis-config', 'PUT', {
-                            analysis_interval: this.analysisConfig.interval,
-                            notification_threshold: this.analysisConfig.notificationThreshold,
-                            is_active: this.analysisConfig.isActive,
-                            enabled_symbols: this.selectedSymbols
-                        });
-                        this.showSuccess('Konfiguracja zaktualizowana');
-                    } catch (error) {
-                        this.showError(error.message);
-                    }
-                },
-                
-                async triggerManualAnalysis() {
-                    try {
-                        this.loading.aiAnalysis = true;
-                        this.showSuccess('Uruchamiam analizę... To może potrwać kilka minut.');
-                        
-                        const result = await this.apiCall('/ai/trigger-analysis', 'POST', {
-                            symbols: this.selectedSymbols.length > 0 ? this.selectedSymbols : null
-                        });
-                        
-                        this.showSuccess(result.message);
-                        await this.loadAIAnalysisResults();
-                        await this.loadTokenStatistics();
-                    } catch (error) {
-                        this.showError(error.message);
-                    } finally {
-                        this.loading.aiAnalysis = false;
-                    }
-                },
-                
-                // ===== MODAL METHODS =====
-                
-                async showAnalysisDetails(analysisId) {
-                    try {
-                        const data = await this.apiCall(`/ai/analysis-results/${analysisId}`);
-                        this.analysisModal.data = data;
-                        this.analysisModal.activeTab = 'ai';
-                        this.analysisModal.open = true;
-                    } catch (error) {
-                        this.showError(`Błąd ładowania szczegółów: ${error.message}`);
-                    }
-                },
-                
-                closeAnalysisModal() {
-                    this.analysisModal.open = false;
-                    this.analysisModal.data = null;
-                    this.analysisModal.activeTab = 'ai';
-                },
-                
-                switchAnalysisTab(tab) {
-                    this.analysisModal.activeTab = tab;
-                },
-                
-                // ===== SYMBOLS METHODS =====
-                
-                getAllSymbolsList() {
-                    return [
-                        ...this.allSymbols.forex,
-                        ...this.allSymbols.indices,
-                        ...this.allSymbols.stocks,
-                        ...this.allSymbols.metals
-                    ];
-                },
-                
-                toggleAllSymbols() {
-                    if (this.selectAllSymbols) {
-                        this.selectedSymbols = this.getAllSymbolsList();
-                    } else {
-                        this.selectedSymbols = [];
-                    }
-                },
-                
-                // ===== SSE METHODS =====
-                
-                connectSSE() {
-                    if (this.sseConnection) return; // już połączone
-                    
-                    const url = API_BASE === '/api' 
-                        ? '/api/stream/ai-updates' 
-                        : `${API_BASE}/stream/ai-updates`;
-                    
-                    try {
-                        this.sseConnection = new EventSource(url);
-                        
-                        this.sseConnection.addEventListener('new_analysis', (e) => {
-                            try {
-                                const data = JSON.parse(e.data);
-                                // Dodaj nową analizę do listy
-                                this.aiAnalysisResults.unshift(data);
-                                // Ogranicz listę do 50 elementów
-                                if (this.aiAnalysisResults.length > 50) {
-                                    this.aiAnalysisResults = this.aiAnalysisResults.slice(0, 50);
-                                }
-                                // Aktualizuj statystyki
-                                this.loadTokenStatistics();
-                            } catch (error) {
-                                console.error('Error parsing new_analysis event:', error);
-                            }
-                        });
-                        
-                        this.sseConnection.addEventListener('token_update', (e) => {
-                            try {
-                                const data = JSON.parse(e.data);
-                                this.tokenStats = data;
-                            } catch (error) {
-                                console.error('Error parsing token_update event:', error);
-                            }
-                        });
-                        
-                        this.sseConnection.addEventListener('config_change', (e) => {
-                            try {
-                                const data = JSON.parse(e.data);
-                                this.analysisConfig = {
-                                    interval: data.analysis_interval,
-                                    notificationThreshold: data.notification_threshold,
-                                    isActive: data.is_active
-                                };
-                                this.selectedSymbols = data.enabled_symbols || [];
-                            } catch (error) {
-                                console.error('Error parsing config_change event:', error);
-                            }
-                        });
-                        
-                        this.sseConnection.onerror = (error) => {
-                            console.error('SSE error:', error);
-                            this.disconnectSSE();
-                            // Retry po 5 sekundach
-                            setTimeout(() => this.connectSSE(), 5000);
-                        };
-                        
-                        console.log('SSE connection established');
-                    } catch (error) {
-                        console.error('Error connecting SSE:', error);
-                    }
-                },
-                
-                disconnectSSE() {
-                    if (this.sseConnection) {
-                        this.sseConnection.close();
-                        this.sseConnection = null;
-                        console.log('SSE connection closed');
-                    }
-                },
-                
-                // ===== HELPER METHODS =====
-                
-                getAgreementClass(score) {
-                    if (!score) return 'low';
-                    if (score >= 75) return 'high';
-                    if (score >= 50) return 'medium';
-                    return 'low';
-                },
-                
-                formatTimestamp(timestamp) {
-                    if (!timestamp) return '';
-                    return new Date(timestamp).toLocaleString('pl-PL');
-                },
-                
-                formatCost(cost) {
-                    if (!cost) return '$0.0000';
-                    return '$' + cost.toFixed(4);
-                }
-            }
-        }
-    </script>
 </body>
 </html>
