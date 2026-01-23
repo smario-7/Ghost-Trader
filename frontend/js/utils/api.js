@@ -74,7 +74,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 // Formatuje datę do polskiego formatu w strefie czasowej Warsaw
 function formatDate(dateString) {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleString('pl-PL', { 
+    // SQLite zwraca timestamp w UTC bez oznaczenia timezone
+    // Dodajemy 'Z' aby JavaScript poprawnie zinterpretował jako UTC
+    const utcString = dateString.includes('Z') ? dateString : dateString + 'Z';
+    return new Date(utcString).toLocaleString('pl-PL', { 
         timeZone: 'Europe/Warsaw' 
     });
 }

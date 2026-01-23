@@ -110,157 +110,6 @@
         <!-- Dashboard View -->
         <div x-show="currentView === 'dashboard'">
         <div class="grid">
-            <!-- Konfiguracja AI -->
-            <div class="card">
-                <h2>⚙️ Konfiguracja AI</h2>
-                
-                <div class="model-selector">
-                    <label for="model-select" style="display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">Wybierz model OpenAI:</label>
-                    <select id="model-select" x-model="aiModel" @change="updateModelInfo()">
-                        <option value="gpt-4o-mini">GPT-4o Mini (Zalecany) - Najlepszy stosunek jakości do ceny</option>
-                        <option value="gpt-4o">GPT-4o - Zaawansowana analiza</option>
-                        <option value="gpt-4-turbo">GPT-4 Turbo - Głębsza analiza</option>
-                        <option value="gpt-4">GPT-4 - Klasyczny</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo - Ekonomiczny</option>
-                    </select>
-                    <div class="model-info" x-html="modelInfoText"></div>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Status AI</span>
-                    <span class="status-badge active">ACTIVE</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Ostatnia analiza</span>
-                    <span class="stat-value" x-text="lastAnalysis"></span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">API Calls dziś</span>
-                    <span class="stat-value" x-text="apiCallsToday"></span>
-                </div>
-
-                <button class="btn" style="margin-top: 16px;" @click="runAIAnalysis()">
-                    🧠 Uruchom analizę AI
-                </button>
-            </div>
-
-            <!-- Aktualny sygnał -->
-            <div class="card">
-                <h2>🎯 Aktualny Sygnał AI</h2>
-                
-                <div class="signal buy">
-                    <div class="signal-header">
-                        <div class="signal-type buy">📈 BUY</div>
-                        <div class="confidence high">Confidence: 78%</div>
-                    </div>
-
-                    <div class="signal-details">
-                        <p><strong>Symbol:</strong> BTC/USDT</p>
-                        <p><strong>Cena wejścia:</strong> $48,500</p>
-                        <p style="margin-top: 8px; font-size: 12px; line-height: 1.5;">
-                            <strong>Reasoning:</strong> Fed sygnalizuje obniżki stóp, inflacja spadła poniżej prognozy. RSI neutralny (45) - przestrzeń do wzrostu. Pozytywny sentiment (70%).
-                        </p>
-                    </div>
-
-                    <div class="sl-tp">
-                        <div class="sl-tp-item">
-                            <div class="sl-tp-label">🛑 Stop Loss</div>
-                            <div class="sl-tp-value sl">$46,125 (-5%)</div>
-                        </div>
-                        <div class="sl-tp-item">
-                            <div class="sl-tp-label">🎯 Take Profit</div>
-                            <div class="sl-tp-value tp">$53,350 (+10%)</div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; font-size: 12px; color: #94a3b8;">
-                        <strong style="color: #f1f5f9;">Risk/Reward:</strong> 1:2.0 ✅ | 
-                        <strong style="color: #f1f5f9;">Position Size:</strong> Medium
-                    </div>
-                </div>
-            </div>
-
-            <!-- Parametry techniczne -->
-            <div class="card">
-                <h2>📊 Parametry Analizy Technicznej</h2>
-                
-                <div class="alert">
-                    <h3>✅ Zoptymalizowane dla BTC/USDT</h3>
-                    <p>Parametry dostosowane do volatility i charakterystyki rynku crypto.</p>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">RSI Period</span>
-                    <span class="stat-value">14 (Standard)</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">RSI Oversold</span>
-                    <span class="stat-value">30 (Konserwatywny)</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">RSI Overbought</span>
-                    <span class="stat-value">70 (Konserwatywny)</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">MACD Fast/Slow/Signal</span>
-                    <span class="stat-value">12/26/9</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Bollinger Bands</span>
-                    <span class="stat-value">20 period, 2 StdDev</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Moving Averages</span>
-                    <span class="stat-value">SMA 50/200</span>
-                </div>
-
-                <button class="btn btn-secondary" style="margin-top: 16px;">
-                    ⚙️ Dostosuj parametry
-                </button>
-            </div>
-
-            <!-- Dane makro -->
-            <div class="card">
-                <h2>🌍 Dane Makroekonomiczne</h2>
-                
-                <div class="stat">
-                    <span class="stat-label">Fed Rate</span>
-                    <span class="stat-value">5.50%</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">CPI Inflation</span>
-                    <span class="stat-value">3.2% ↓</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">GDP Growth</span>
-                    <span class="stat-value">2.1%</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Unemployment</span>
-                    <span class="stat-value">3.8%</span>
-                </div>
-
-                <div class="stat">
-                    <span class="stat-label">Następne posiedzenie Fed</span>
-                    <span class="stat-value">2025-02-01</span>
-                </div>
-
-                <div class="alert" style="margin-top: 16px;">
-                    <h3>📰 News Sentiment</h3>
-                    <p><strong>Pozytywny (70%)</strong> - Rosnące napływy instytucjonalne, Fed dovish</p>
-                </div>
-            </div>
-
             <!-- Informacje o Bot -->
             <div class="card">
                 <h2>
@@ -321,38 +170,6 @@
                 <template x-if="!loading.statistics && !statistics">
                     <div class="error" x-text="errorMessage || 'Błąd ładowania danych'"></div>
                 </template>
-            </div>
-
-            <!-- Aktywne strategie -->
-            <div class="card">
-                <h2>
-                    📋 Strategie Tradingowe
-                    <button class="btn btn-small" @click="openModal('add')" style="width: auto; padding: 8px 16px; font-size: 12px;">➕ Dodaj</button>
-                </h2>
-                <div x-show="loading.strategies" class="loading">Ładowanie...</div>
-                <template x-if="!loading.strategies && strategies.length === 0">
-                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak strategii. Dodaj pierwszą strategię.</p>
-                </template>
-                    <template x-if="!loading.strategies && strategies.length > 0">
-                        <template x-for="strategy in strategies" :key="strategy.id">
-                            <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <div>
-                                        <strong style="color: #f1f5f9;" x-text="strategy.name"></strong>
-                                        <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="strategy.strategy_type"></span>
-                                    </div>
-                                    <span class="status-badge" :class="strategy.is_active ? 'active' : 'inactive'" x-text="strategy.is_active ? 'ACTIVE' : 'INACTIVE'"></span>
-                                </div>
-                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
-                                    <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
-                                    <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
-                                </div>
-                            </div>
-                        </template>
-                    </template>
             </div>
 
             <!-- Ostatnie Sygnały -->
@@ -427,8 +244,315 @@
                         </template>
                     </template>
             </div>
+        </div>
 
-            <!-- Panel Wyników Analiz AI -->
+        <!-- Risk disclaimer -->
+        <div class="alert">
+            <h3>⚠️ Disclaimer</h3>
+            <p>
+                Trading wiąże się z ryzykiem utraty kapitału. Sygnały AI to narzędzie wspomagające, nie gwarancja zysku. 
+                Zawsze przeprowadzaj własną analizę i zarządzaj ryzykiem. Nie inwestuj więcej niż możesz stracić.
+            </p>
+        </div>
+        </div>
+        <!-- Koniec Dashboard View -->
+
+        <!-- Strategies View -->
+        <div x-show="currentView === 'strategies'">
+        <div class="grid">
+            <!-- Strategie Tradingowe -->
+            <div class="card">
+                <h2>
+                    📋 Strategie Tradingowe
+                    <button class="btn btn-small" @click="openModal('add')" style="width: auto; padding: 8px 16px; font-size: 12px;">➕ Dodaj</button>
+                </h2>
+                <div x-show="loading.strategies" class="loading">Ładowanie...</div>
+                <template x-if="!loading.strategies && strategies.length === 0">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Brak strategii. Dodaj pierwszą strategię.</p>
+                </template>
+                    <template x-if="!loading.strategies && strategies.length > 0">
+                        <template x-for="strategy in strategies" :key="strategy.id">
+                            <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #f1f5f9;" x-text="strategy.name"></strong>
+                                        <span style="margin-left: 10px; color: #94a3b8; font-size: 12px;" x-text="strategy.strategy_type"></span>
+                                    </div>
+                                    <span class="status-badge" :class="strategy.is_active ? 'active' : 'inactive'" x-text="strategy.is_active ? 'ACTIVE' : 'INACTIVE'"></span>
+                                </div>
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+                                    <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
+                                    <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+            </div>
+
+            <!-- Parametry Analizy Technicznej -->
+            <div class="card">
+                <h2>📊 Parametry Analizy Technicznej</h2>
+                
+                <template x-if="!technicalParams || technicalParams.strategy_type === 'DEFAULT'">
+                    <div>
+                        <div class="alert">
+                            <h3>ℹ️ Domyślne parametry</h3>
+                            <p>Brak aktywnych strategii. Poniżej standardowe wartości wskaźników technicznych.</p>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">RSI Period</span>
+                            <span class="stat-value">14 (Standard)</span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">RSI Oversold/Overbought</span>
+                            <span class="stat-value">30 / 70</span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">MACD Fast/Slow/Signal</span>
+                            <span class="stat-value">12 / 26 / 9</span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">Bollinger Bands</span>
+                            <span class="stat-value">20 period, 2 StdDev</span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">Moving Averages</span>
+                            <span class="stat-value">SMA 50 / 200</span>
+                        </div>
+                    </div>
+                </template>
+                
+                <template x-if="technicalParams && technicalParams.strategy_type !== 'DEFAULT'">
+                    <div>
+                        <div class="alert">
+                            <h3>✅ Parametry z aktywnej strategii</h3>
+                            <p>
+                                <strong>Strategia:</strong> <span x-text="technicalParams.strategy_type"></span><br>
+                                <strong>Symbol:</strong> <span x-text="technicalParams.symbol"></span> | 
+                                <strong>Timeframe:</strong> <span x-text="technicalParams.timeframe"></span>
+                            </p>
+                        </div>
+
+                        <template x-if="technicalParams.strategy_type === 'RSI'">
+                            <div>
+                                <div class="stat">
+                                    <span class="stat-label">RSI Period</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.period"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">RSI Oversold</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.oversold"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">RSI Overbought</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.overbought"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="technicalParams.strategy_type === 'MACD'">
+                            <div>
+                                <div class="stat">
+                                    <span class="stat-label">MACD Fast Period</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.fast_period"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">MACD Slow Period</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.slow_period"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">MACD Signal Period</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.signal_period"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="technicalParams.strategy_type === 'BOLLINGER_BANDS'">
+                            <div>
+                                <div class="stat">
+                                    <span class="stat-label">Bollinger Period</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.period"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Standard Deviation</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.std_dev"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="technicalParams.strategy_type === 'MOVING_AVERAGE'">
+                            <div>
+                                <div class="stat">
+                                    <span class="stat-label">Short Period (MA)</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.short_period"></span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Long Period (MA)</span>
+                                    <span class="stat-value" x-text="technicalParams.parameters.long_period"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+        </div>
+        <!-- Koniec Strategies View -->
+
+        <!-- AI Analysis View -->
+        <div x-show="currentView === 'ai-analysis'">
+        <div class="grid">
+            <!-- Konfiguracja AI -->
+            <div class="card">
+                <h2>⚙️ Konfiguracja AI</h2>
+                
+                <div class="model-selector">
+                    <label for="model-select" style="display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">Wybierz model OpenAI:</label>
+                    <select id="model-select" x-model="aiModel" @change="updateModelInfo()">
+                        <option value="gpt-4o-mini">GPT-4o Mini (Zalecany) - Najlepszy stosunek jakości do ceny</option>
+                        <option value="gpt-4o">GPT-4o - Zaawansowana analiza</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo - Głębsza analiza</option>
+                        <option value="gpt-4">GPT-4 - Klasyczny</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo - Ekonomiczny</option>
+                    </select>
+                    <div class="model-info" x-html="modelInfoText"></div>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Status AI</span>
+                    <span class="status-badge active">ACTIVE</span>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Ostatnia analiza</span>
+                    <span class="stat-value" x-text="lastAnalysis"></span>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">API Calls dziś</span>
+                    <span class="stat-value" x-text="apiCallsToday"></span>
+                </div>
+
+                <button class="btn" style="margin-top: 16px;" @click="runAIAnalysis()">
+                    🧠 Uruchom analizę AI
+                </button>
+            </div>
+
+            <!-- Aktualny Sygnał AI -->
+            <div class="card">
+                <h2>🎯 Aktualny Sygnał AI</h2>
+                
+                <template x-if="!currentAISignal">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">
+                        Brak aktywnego sygnału AI. Uruchom analizę lub poczekaj na automatyczną.
+                    </p>
+                </template>
+                
+                <template x-if="currentAISignal">
+                    <div class="signal" :class="currentAISignal.final_signal.toLowerCase()">
+                        <div class="signal-header">
+                            <div class="signal-type" :class="currentAISignal.final_signal.toLowerCase()" x-text="currentAISignal.final_signal === 'BUY' ? '📈 BUY' : '📉 SELL'"></div>
+                            <div class="confidence" :class="getAgreementClass(currentAISignal.agreement_score)" x-text="'Zgodność: ' + (currentAISignal.agreement_score || 0) + '%'"></div>
+                        </div>
+
+                        <div class="signal-details">
+                            <p><strong>Symbol:</strong> <span x-text="currentAISignal.symbol"></span></p>
+                            <p><strong>Data analizy:</strong> <span x-text="formatTimestamp(currentAISignal.timestamp)"></span></p>
+                            <p style="margin-top: 8px; font-size: 12px; line-height: 1.5;">
+                                <strong>Uzasadnienie:</strong> <span x-text="currentAISignal.decision_reason || 'Brak szczegółów'"></span>
+                            </p>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; color: #94a3b8;">AI</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #f1f5f9;" x-text="currentAISignal.ai_recommendation || 'N/A'"></div>
+                                <div style="font-size: 10px; color: #94a3b8;" x-text="(currentAISignal.ai_confidence || 0) + '%'"></div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; color: #94a3b8;">Technical</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #f1f5f9;" x-text="currentAISignal.technical_signal || 'N/A'"></div>
+                                <div style="font-size: 10px; color: #94a3b8;" x-text="(currentAISignal.technical_confidence || 0) + '%'"></div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; color: #94a3b8;">Macro</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #f1f5f9;" x-text="currentAISignal.macro_signal || 'N/A'"></div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; color: #94a3b8;">News</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #f1f5f9;" x-text="currentAISignal.news_sentiment || 'N/A'"></div>
+                                <div style="font-size: 10px; color: #94a3b8;" x-text="(currentAISignal.news_score || 0) + '%'"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 12px; text-align: center;">
+                            <button class="btn btn-small" @click="showAnalysisDetails(currentAISignal.id)" style="width: auto; padding: 8px 16px;">
+                                📊 Szczegóły analizy
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Dane Makroekonomiczne -->
+            <div class="card">
+                <h2>🌍 Dane Makroekonomiczne</h2>
+                
+                <template x-if="!macroData">
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Ładowanie danych...</p>
+                </template>
+                
+                <template x-if="macroData">
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Fed Rate</span>
+                            <span class="stat-value" x-text="macroData.fed?.current_rate ? macroData.fed.current_rate + '%' : 'N/A'"></span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">CPI Inflation (roczna)</span>
+                            <span class="stat-value" x-text="macroData.inflation?.cpi_annual ? macroData.inflation.cpi_annual + '%' : 'N/A'"></span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">GDP Growth</span>
+                            <span class="stat-value" x-text="macroData.gdp?.current_gdp_growth ? macroData.gdp.current_gdp_growth + '%' : 'N/A'"></span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">Unemployment</span>
+                            <span class="stat-value" x-text="macroData.employment?.unemployment_rate ? macroData.employment.unemployment_rate + '%' : 'N/A'"></span>
+                        </div>
+
+                        <div class="stat">
+                            <span class="stat-label">Następne posiedzenie Fed</span>
+                            <span class="stat-value" x-text="macroData.fed?.next_meeting || 'N/A'"></span>
+                        </div>
+
+                        <div style="margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 6px; font-size: 12px;">
+                            <div style="color: #94a3b8; margin-bottom: 8px;">
+                                <strong style="color: #f1f5f9;">Źródła danych:</strong>
+                            </div>
+                            <div style="color: #94a3b8;">
+                                Fed: <span x-text="macroData.fed?.source || 'N/A'"></span><br>
+                                Inflacja: <span x-text="macroData.inflation?.source || 'N/A'"></span><br>
+                                PKB: <span x-text="macroData.gdp?.source || 'N/A'"></span><br>
+                                Zatrudnienie: <span x-text="macroData.employment?.source || 'N/A'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Wyniki Analiz AI -->
             <div class="card">
                 <h2>
                     🤖 Wyniki Analiz AI
@@ -681,33 +805,8 @@
                 </div>
             </div>
         </div>
-
-        <!-- Risk disclaimer -->
-        <div class="alert">
-            <h3>⚠️ Disclaimer</h3>
-            <p>
-                Trading wiąże się z ryzykiem utraty kapitału. Sygnały AI to narzędzie wspomagające, nie gwarancja zysku. 
-                Zawsze przeprowadzaj własną analizę i zarządzaj ryzykiem. Nie inwestuj więcej niż możesz stracić.
-            </p>
         </div>
-        </div>
-        <!-- Koniec Dashboard View -->
-
-        <!-- Strategies View -->
-        <div x-show="currentView === 'strategies'">
-            <div class="alert">
-                <h3>📋 Zarządzanie Strategiami</h3>
-                <p>Widok strategii - wszystkie funkcje CRUD dla strategii tradingowych.</p>
-            </div>
-        </div>
-
-        <!-- AI Analysis View -->
-        <div x-show="currentView === 'ai-analysis'">
-            <div class="alert">
-                <h3>🧠 Analiza AI</h3>
-                <p>Widok analiz AI - wyniki, statystyki tokenów, konfiguracja.</p>
-            </div>
-        </div>
+        <!-- Koniec AI Analysis View -->
 
         <!-- Charts View -->
         <div x-show="currentView === 'charts'" id="charts-view">

@@ -24,6 +24,11 @@ const aiAnalysisMethods = {
                 );
             }
             
+            // Ustaw aktualny sygnał AI (najnowszy z wysokim agreement_score)
+            this.currentAISignal = this.aiAnalysisResults.find(
+                r => r.agreement_score >= 60 && (r.final_signal === 'BUY' || r.final_signal === 'SELL')
+            ) || null;
+            
             this.refreshIndicators.aiAnalysis = '✓';
             setTimeout(() => this.refreshIndicators.aiAnalysis = '', 2000);
         } catch (error) {

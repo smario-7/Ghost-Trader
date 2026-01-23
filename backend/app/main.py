@@ -127,6 +127,12 @@ def get_auto_scheduler(
     )
 
 
+def get_data_collection_service():
+    """Zwraca instancję DataCollectionService"""
+    from .services.data_collection_service import DataCollectionService
+    return DataCollectionService()
+
+
 def get_signal_aggregator(
     db: Database = Depends(get_database)
 ):
@@ -852,6 +858,21 @@ async def get_statistics(
         return stats
     except Exception as e:
         logger.error(f"Error getting statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/macro-data", dependencies=[Depends(verify_api_key)])
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
+async def get_macro_data(
+    request: Request,
+    data_service = Depends(get_data_collection_service)
+):
+    """Pobiera dane makroekonomiczne (Fed, inflacja, PKB, zatrudnienie)"""
+    try:
+        macro_data = await data_service.get_all_macro_data()
+        return macro_data
+    except Exception as e:
+        logger.error(f"Error getting macro data: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

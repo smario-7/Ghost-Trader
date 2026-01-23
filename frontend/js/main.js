@@ -24,6 +24,8 @@ function tradingBot() {
         signals: [],
         activity: [],
         uniqueSymbols: [],
+        technicalParams: null,
+        macroData: null,
         
         // Stany ładowania
         loading: {
@@ -71,6 +73,7 @@ function tradingBot() {
             symbol: '',
             signal: ''
         },
+        currentAISignal: null,
         
         // Statystyki tokenów
         tokenStats: {
@@ -203,7 +206,8 @@ function tradingBot() {
                     this.loadBotActivity(),
                     this.loadAIAnalysisResults(),
                     this.loadTokenStatistics(),
-                    this.loadAnalysisConfig()
+                    this.loadAnalysisConfig(),
+                    this.loadMacroData()
                 ]);
                 
                 this.updateLastUpdate();

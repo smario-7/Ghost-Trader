@@ -58,6 +58,9 @@ const dashboardMethods = {
             const data = await apiCall('/strategies');
             this.backendWarning = false;
             this.strategies = data.strategies || [];
+            
+            // Pobierz parametry techniczne z pierwszej aktywnej strategii
+            this.updateTechnicalParams();
         } catch (error) {
             if (error && error.silent) return;
             this.showError(error.message);
@@ -66,6 +69,44 @@ const dashboardMethods = {
             }
         } finally {
             this.loading.strategies = false;
+        }
+    },
+
+    // Aktualizuje parametry techniczne na podstawie aktywnych strategii
+    updateTechnicalParams() {
+        // Znajdź pierwszą aktywną strategię z parametrami technicznymi
+        const activeStrategy = this.strategies.find(s => 
+            s.is_active && 
+            (s.strategy_type === 'RSI' || s.strategy_type === 'MACD' || 
+             s.strategy_type === 'BOLLINGER_BANDS' || s.strategy_type === 'MOVING_AVERAGE')
+        );
+        
+        if (activeStrategy) {
+            this.technicalParams = {
+                strategy_type: activeStrategy.strategy_type,
+                symbol: activeStrategy.symbol,
+                timeframe: activeStrategy.timeframe,
+                parameters: activeStrategy.parameters
+            };
+        } else {
+            // Ustaw domyślne wartości jeśli brak aktywnych strategii
+            this.technicalParams = {
+                strategy_type: 'DEFAULT',
+                symbol: 'N/A',
+                timeframe: 'N/A',
+                parameters: {
+                    rsi_period: 14,
+                    rsi_oversold: 30,
+                    rsi_overbought: 70,
+                    macd_fast: 12,
+                    macd_slow: 26,
+                    macd_signal: 9,
+                    bb_period: 20,
+                    bb_std_dev: 2,
+                    ma_short: 50,
+                    ma_long: 200
+                }
+            };
         }
     },
 
@@ -177,6 +218,18 @@ const dashboardMethods = {
         });
     },
 
+    // Ładuje dane makroekonomiczne
+    async loadMacroData() {
+        try {
+            const data = await apiCall('/macro-data');
+            this.macroData = data;
+        } catch (error) {
+            if (error && error.silent) return;
+            console.error('Error loading macro data:', error);
+            // Nie pokazuj błędu użytkownikowi - dane makro są opcjonalne
+        }
+    },
+
     // Wyświetla komunikat błędu
     showError(message) {
         this.errorMessage = message;
@@ -200,7 +253,10 @@ const dashboardMethods = {
     // Helper: formatuje timestamp w strefie czasowej Warsaw
     formatTimestamp(timestamp) {
         if (!timestamp) return '';
-        return new Date(timestamp).toLocaleString('pl-PL', {
+        // SQLite zwraca timestamp w UTC bez oznaczenia timezone
+        // Dodajemy 'Z' aby JavaScript poprawnie zinterpretował jako UTC
+        const utcString = timestamp.includes('Z') ? timestamp : timestamp + 'Z';
+        return new Date(utcString).toLocaleString('pl-PL', {
             timeZone: 'Europe/Warsaw'
         });
     },
