@@ -22,6 +22,58 @@
             border-radius: 12px;
             margin-bottom: 30px;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        
+        .clock-container {
+            text-align: right;
+            color: white;
+        }
+        
+        .clock-time {
+            font-size: 32px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+        
+        .clock-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+            }
+            
+            .header-right {
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .clock-container {
+                text-align: left;
+            }
+            
+            .clock-time {
+                font-size: 24px;
+            }
         }
 
         h1 {
@@ -371,7 +423,6 @@
         }
 
         .modal {
-            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -380,10 +431,14 @@
             height: 100%;
             background: rgba(0,0,0,0.7);
             overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-
-        .modal.show {
-            display: block;
+        
+        /* Ukryj elementy z x-cloak przed inicjalizacją Alpine.js */
+        [x-cloak] { 
+            display: none !important; 
         }
 
         .modal-content {

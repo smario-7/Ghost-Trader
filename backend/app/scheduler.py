@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from .config import get_settings
+from .config import get_settings, get_polish_time
 from .utils.logger import setup_logger
 from .utils.database import Database
 from .services.telegram_service import TelegramService
@@ -163,7 +163,7 @@ def setup_scheduler():
             sell_count = sum(1 for r in results if r.get('signal') == 'SELL')
             hold_count = sum(1 for r in results if r.get('signal') == 'HOLD')
             
-            duration = (datetime.now() - start_time).total_seconds()
+            duration = (get_polish_time() - start_time).total_seconds()
             
             logger.info(
                 f"✅ Signal check completed in {duration:.2f}s | "
@@ -203,7 +203,7 @@ def setup_scheduler():
             signals_count = sum(1 for r in results if r.get('final_signal') in ['BUY', 'SELL'])
             total_cost = sum(r.get('estimated_cost', 0) for r in results)
             
-            duration = (datetime.now() - start_time).total_seconds()
+            duration = (get_polish_time() - start_time).total_seconds()
             
             logger.info(
                 f"✅ Auto analysis completed in {duration:.2f}s | "
@@ -237,7 +237,7 @@ def setup_scheduler():
             logger.info("💾 Starting database backup...")
             
             # Utwórz nazwę pliku backup
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = get_polish_time().strftime("%Y%m%d_%H%M%S")
             backup_file = f"{settings.backup_dir}/trading_bot_{timestamp}.db"
             
             # Wykonaj backup

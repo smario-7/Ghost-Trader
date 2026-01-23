@@ -29,8 +29,8 @@ class AIAnalysisService:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.api_url = "https://api.openai.com/v1/chat/completions"
         
-        # Domyślnie GPT-4o (najnowszy, najlepszy)
-        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o")
+        # Domyślnie GPT-4o-mini (tańszy, dobry balans ceny/jakości)
+        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         
         self.logger = logging.getLogger("trading_bot.ai")
         
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     async def test_ai_analysis():
         # Pobierz API key z .env
         api_key = os.getenv("OPENAI_API_KEY")
-        model = os.getenv("OPENAI_MODEL", "gpt-4o")
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         
         if not api_key:
             print("❌ BŁĄD: Ustaw OPENAI_API_KEY w .env")

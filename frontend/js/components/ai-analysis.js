@@ -27,6 +27,7 @@ const aiAnalysisMethods = {
             this.refreshIndicators.aiAnalysis = '✓';
             setTimeout(() => this.refreshIndicators.aiAnalysis = '', 2000);
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
         } finally {
             this.loading.aiAnalysis = false;
@@ -39,6 +40,7 @@ const aiAnalysisMethods = {
             const data = await apiCall('/ai/token-statistics');
             this.tokenStats = data;
         } catch (error) {
+            if (error && error.silent) return;
             console.error('Error loading token stats:', error);
         }
     },
@@ -55,6 +57,7 @@ const aiAnalysisMethods = {
             this.selectedSymbols = data.enabled_symbols || [];
             this.selectAllSymbols = this.selectedSymbols.length === this.getAllSymbolsList().length;
         } catch (error) {
+            if (error && error.silent) return;
             console.error('Error loading analysis config:', error);
         }
     },
@@ -70,6 +73,7 @@ const aiAnalysisMethods = {
             });
             this.showSuccess('Konfiguracja zaktualizowana');
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
         }
     },
@@ -88,6 +92,7 @@ const aiAnalysisMethods = {
             await this.loadAIAnalysisResults();
             await this.loadTokenStatistics();
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
         } finally {
             this.loading.aiAnalysis = false;
@@ -102,6 +107,7 @@ const aiAnalysisMethods = {
             this.analysisModal.activeTab = 'ai';
             this.analysisModal.open = true;
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(`Błąd ładowania szczegółów: ${error.message}`);
         }
     },

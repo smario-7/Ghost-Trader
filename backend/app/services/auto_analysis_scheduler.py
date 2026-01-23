@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from .ai_strategy import AIStrategy
+from ..config import get_polish_time
 from .signal_aggregator_service import SignalAggregatorService
 from ..utils.database import Database
 from .telegram_service import TelegramService
@@ -167,7 +168,7 @@ class AutoAnalysisScheduler:
             - Statystyki są zapisywane w self.last_cycle_stats
         """
         self.logger.info(f"Starting analysis cycle for {len(self.symbols)} symbols")
-        start_time = datetime.now()
+        start_time = get_polish_time()
         
         # Odśwież listę symboli (może się zmienić przez API)
         self.symbols = self._get_enabled_symbols()
@@ -206,7 +207,7 @@ class AutoAnalysisScheduler:
                 errors_count += 1
         
         # Oblicz statystyki
-        duration = (datetime.now() - start_time).total_seconds()
+        duration = (get_polish_time() - start_time).total_seconds()
         signals_count = sum(1 for r in results if r.get('final_signal') in ['BUY', 'SELL'])
         total_tokens = sum(r.get('tokens_used', 0) for r in results)
         total_cost = sum(r.get('estimated_cost', 0.0) for r in results)
@@ -379,7 +380,7 @@ class AutoAnalysisScheduler:
 {decision_reason}
 
 <b>ID Analizy:</b> #{analysis_id}
-<i>Czas: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</i>
+<i>Czas: {get_polish_time().strftime("%Y-%m-%d %H:%M:%S")}</i>
 """
             
             # Wyślij wiadomość

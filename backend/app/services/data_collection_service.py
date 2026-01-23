@@ -5,6 +5,7 @@ import aiohttp
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from ..config import get_polish_time
 import json
 
 
@@ -46,7 +47,7 @@ class MacroDataService:
             "inflation_target": 2.0,
             "current_inflation": 3.2,
             "source": "Federal Reserve",
-            "last_updated": datetime.now().isoformat()
+            "last_updated": get_polish_time().isoformat()
         }
     
     async def get_inflation_data(self) -> Dict[str, Any]:
@@ -66,7 +67,7 @@ class MacroDataService:
             "last_release": "2024-12-15",
             "next_release": "2025-01-15",
             "source": "Bureau of Labor Statistics",
-            "last_updated": datetime.now().isoformat()
+            "last_updated": get_polish_time().isoformat()
         }
     
     async def get_gdp_data(self) -> Dict[str, Any]:
@@ -84,7 +85,7 @@ class MacroDataService:
             "last_release": "2024-12-20",
             "next_release": "2025-03-28",
             "source": "Bureau of Economic Analysis",
-            "last_updated": datetime.now().isoformat()
+            "last_updated": get_polish_time().isoformat()
         }
     
     async def get_employment_data(self) -> Dict[str, Any]:
@@ -102,7 +103,7 @@ class MacroDataService:
             "last_release": "2025-01-03",
             "next_release": "2025-02-07",
             "source": "Bureau of Labor Statistics",
-            "last_updated": datetime.now().isoformat()
+            "last_updated": get_polish_time().isoformat()
         }
     
     async def get_all_macro_data(self) -> Dict[str, Any]:
@@ -178,7 +179,7 @@ class NewsService:
                 "title": "Fed Chair Powell Signals Cautious Approach to Rate Cuts",
                 "source": "Reuters",
                 "url": "https://reuters.com/...",
-                "published_at": (datetime.now() - timedelta(hours=2)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=2)).isoformat(),
                 "summary": "Federal Reserve Chairman Jerome Powell indicated the central bank would take a measured approach to potential interest rate reductions in 2025.",
                 "sentiment": "neutral",
                 "relevance": 0.9
@@ -187,7 +188,7 @@ class NewsService:
                 "title": "Bitcoin Surges Past $50K as Institutional Demand Grows",
                 "source": "Bloomberg",
                 "url": "https://bloomberg.com/...",
-                "published_at": (datetime.now() - timedelta(hours=5)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=5)).isoformat(),
                 "summary": "Bitcoin reached new highs driven by increasing institutional adoption and ETF inflows.",
                 "sentiment": "positive",
                 "relevance": 0.95
@@ -196,7 +197,7 @@ class NewsService:
                 "title": "US Inflation Eases to 3.2%, Below Expectations",
                 "source": "CNBC",
                 "url": "https://cnbc.com/...",
-                "published_at": (datetime.now() - timedelta(hours=12)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=12)).isoformat(),
                 "summary": "Consumer price index rose less than forecast, bolstering case for Fed rate cuts.",
                 "sentiment": "positive",
                 "relevance": 0.85
@@ -214,7 +215,7 @@ class NewsService:
                 "title": "Tech Stocks Rally on Strong Earnings Reports",
                 "source": "Wall Street Journal",
                 "url": "https://wsj.com/...",
-                "published_at": (datetime.now() - timedelta(hours=15)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=15)).isoformat(),
                 "summary": "Major technology companies exceed Q4 expectations, boosting market sentiment.",
                 "sentiment": "positive",
                 "relevance": 0.8
@@ -296,7 +297,7 @@ class NewsService:
                 "title": f"Whale Activity Increases in {symbol}",
                 "source": "CoinTelegraph",
                 "url": "https://cointelegraph.com/...",
-                "published_at": (datetime.now() - timedelta(hours=6)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=6)).isoformat(),
                 "summary": f"Large {symbol} holders have been accumulating, signaling potential bullish sentiment.",
                 "sentiment": "positive",
                 "category": "market"
@@ -305,7 +306,7 @@ class NewsService:
                 "title": f"{symbol} ETF Sees Record Inflows",
                 "source": "The Block",
                 "url": "https://theblock.co/...",
-                "published_at": (datetime.now() - timedelta(hours=10)).isoformat(),
+                "published_at": (get_polish_time() - timedelta(hours=10)).isoformat(),
                 "summary": f"Institutional investors continue to pour capital into {symbol} exchange-traded funds.",
                 "sentiment": "positive",
                 "category": "institutional"
@@ -391,7 +392,7 @@ class EventCalendarService:
         
         # W produkcji: Trading Economics API, ForexFactory
         
-        now = datetime.now()
+        now = get_polish_time()
         
         demo_events = [
             {
@@ -440,7 +441,7 @@ class EventCalendarService:
         """
         
         all_events = await self.get_upcoming_events(days_ahead=1)
-        today = datetime.now().date()
+        today = get_polish_time().date()
         
         return [
             event for event in all_events

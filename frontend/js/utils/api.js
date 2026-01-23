@@ -7,9 +7,13 @@ const API_BASE = '/api';
 // Automatycznie dodaje API key z localStorage i obsługuje błędy
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
-        const key = localStorage.getItem('api_key') || sessionStorage.getItem('api_key');
+        let key = localStorage.getItem('api_key') || sessionStorage.getItem('api_key');
+        
+        // Jeśli brak klucza, zwróć cichy błąd (nie loguj)
         if (!key) {
-            throw new Error('Brak API Key. Podaj klucz API.');
+            const silentError = new Error('API Key required');
+            silentError.silent = true;
+            throw silentError;
         }
         
         const options = {
@@ -44,6 +48,11 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         
         return await response.json();
     } catch (error) {
+        // Nie loguj błędów "cichych" (brak API key)
+        if (error.silent) {
+            throw error;
+        }
+        
         // Obsługa błędów sieciowych
         if (error.message.includes('Failed to fetch') || 
             error.message.includes('ERR_CONNECTION_REFUSED') ||
@@ -62,10 +71,12 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 }
 
-// Formatuje datę do polskiego formatu
+// Formatuje datę do polskiego formatu w strefie czasowej Warsaw
 function formatDate(dateString) {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleString('pl-PL');
+    return new Date(dateString).toLocaleString('pl-PL', { 
+        timeZone: 'Europe/Warsaw' 
+    });
 }
 
 // Skraca długie parametry JSON do 60 znaków

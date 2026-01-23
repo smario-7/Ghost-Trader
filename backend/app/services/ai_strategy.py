@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 import logging
 from datetime import datetime
 
+from ..config import get_settings, get_polish_time
 from .ai_analysis_service import AIAnalysisService
 from .data_collection_service import (
     MacroDataService,
@@ -42,6 +43,7 @@ class AIStrategy:
         self.market_data = MarketDataService()
         self.telegram = telegram_service
         self.logger = logging.getLogger("trading_bot.ai_strategy")
+        self.settings = get_settings()
     
     async def analyze_and_generate_signal(
         self,
@@ -96,7 +98,7 @@ class AIStrategy:
                 "news": news,
                 "technical_indicators": technical_indicators,
                 "upcoming_events": upcoming_events,
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": get_polish_time().isoformat()
             }
             
             # 6. Wywołaj AI do kompleksowej analizy
@@ -112,7 +114,7 @@ class AIStrategy:
             result = {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_polish_time().isoformat(),
                 
                 # Główna rekomendacja AI
                 "recommendation": ai_analysis.get("recommendation", "HOLD"),
@@ -345,7 +347,7 @@ class AIStrategy:
   • Event Risk: {components.get('event_risk', 'N/A')}
 
 <i>Powered by Claude AI Analysis</i>
-<i>Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</i>
+<i>Time: {get_polish_time().strftime("%Y-%m-%d %H:%M:%S")}</i>
 """
             
             await self.telegram.send_message(message)
@@ -475,13 +477,13 @@ class AIStrategy:
                 symbol, macro_data, news, technical_indicators
             )
             tokens_used = self._count_tokens(prompt_text)
-            estimated_cost = self._estimate_cost(tokens_used)
+            estimated_cost = self._estimate_cost(tokens_used, model=self.settings.openai_model)
             
             # Przygotuj wyniki w ustandaryzowanym formacie
             result = {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_polish_time().isoformat(),
                 
                 # AI Analysis
                 "ai_analysis": {
@@ -519,7 +521,7 @@ class AIStrategy:
             return {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_polish_time().isoformat(),
                 "ai_analysis": {
                     "recommendation": "HOLD",
                     "confidence": 0,
@@ -627,7 +629,7 @@ class AIStrategy:
     def _estimate_cost(
         self,
         tokens: int,
-        model: str = "gpt-4o"
+        model: str = None
     ) -> float:
         """
         Szacuje koszt zapytania do OpenAI
@@ -652,7 +654,7 @@ class AIStrategy:
         
         Args:
             tokens: Liczba tokenów (input + output razem)
-            model: Model OpenAI (domyślnie "gpt-4o")
+            model: Model OpenAI (domyślnie z ustawień config)
         
         Returns:
             Szacowany koszt w USD (zaokrąglony do 6 miejsc po przecinku)
@@ -663,6 +665,10 @@ class AIStrategy:
             >>> strategy._estimate_cost(1000, "gpt-4o-mini")
             0.00033  # 10x taniej!
         """
+        # Jeśli model nie został podany, użyj z ustawień
+        if model is None:
+            model = self.settings.openai_model
+        
         # Ceny na styczeń 2026 (mogą się zmienić - sprawdź openai.com/pricing)
         # Słownik z cenami dla różnych modeli
         prices = {
@@ -684,8 +690,8 @@ class AIStrategy:
             }
         }
         
-        # Pobierz cenę dla wybranego modelu (domyślnie gpt-4o)
-        price = prices.get(model, prices["gpt-4o"])
+        # Pobierz cenę dla wybranego modelu (domyślnie gpt-4o-mini)
+        price = prices.get(model, prices["gpt-4o-mini"])
         
         # Zakładamy typowy podział: 60% input (nasz prompt), 40% output (odpowiedź AI)
         # To przybliżenie oparte na rzeczywistych danych
@@ -1022,7 +1028,7 @@ class AIStrategy:
             
             return {
                 "symbol": symbol,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_polish_time().isoformat(),
                 "macro_environment": {
                     "summary": self._summarize_macro(macro_data),
                     "score": self._score_macro(macro_data),

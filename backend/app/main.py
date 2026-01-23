@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import uvicorn
 
-from .config import get_settings
+from .config import get_settings, get_polish_time
 from .utils.logger import setup_logger
 from .utils.database import Database
 from .services.telegram_service import TelegramService
@@ -139,7 +139,7 @@ def get_signal_aggregator(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Loguje wszystkie requesty"""
-    start_time = datetime.now()
+    start_time = get_polish_time()
     
     # Log request
     logger.info(
@@ -165,7 +165,7 @@ async def log_requests(request: Request, call_next):
         response = await call_next(request)
         
         # Log response
-        duration = (datetime.now() - start_time).total_seconds()
+        duration = (get_polish_time() - start_time).total_seconds()
         logger.info(
             f"Response: {response.status_code} ({duration:.3f}s)",
             extra={
@@ -233,7 +233,7 @@ async def test_endpoint():
     return {
         "status": "ok",
         "message": "Backend odpowiada poprawnie",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": get_polish_time().isoformat()
     }
 
 
@@ -274,7 +274,7 @@ async def test_activity_logs_endpoint(request: Request):
     return {
         "status": "ok",
         "message": "Activity logs endpoint routing works",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": get_polish_time().isoformat()
     }
 
 
@@ -307,7 +307,7 @@ async def test_telegram_message(
             return {
                 "success": True,
                 "message": "Testowa wiadomość została wysłana na Telegram",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": get_polish_time().isoformat()
             }
         else:
             logger.error("Failed to send test message")
@@ -613,7 +613,7 @@ async def mute_telegram_notifications(
                 detail=f"Nieprawidłowy duration. Dozwolone: {list(duration_map.keys())}"
             )
         
-        muted_until = datetime.now() + duration_map[duration]
+        muted_until = get_polish_time() + duration_map[duration]
         muted_until_str = muted_until.isoformat()
         
         success = db.set_mute_until(muted_until_str)
@@ -706,7 +706,7 @@ async def health_check(request: Request):
         
         return HealthResponse(
             status="healthy" if (db_status and telegram_status) else "unhealthy",
-            timestamp=datetime.now(),
+            timestamp=get_polish_time(),
             database=db_status,
             telegram=telegram_status,
             environment=settings.environment
@@ -715,7 +715,7 @@ async def health_check(request: Request):
         logger.error(f"Health check failed: {str(e)}")
         return HealthResponse(
             status="unhealthy",
-            timestamp=datetime.now(),
+            timestamp=get_polish_time(),
             database=False,
             telegram=False,
             environment=settings.environment
@@ -1941,7 +1941,7 @@ async def stream_updates(
                     # Wyślij dane jako JSON
                     data = {
                         "type": "update",
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": get_polish_time().isoformat(),
                         "data": {
                             "statistics": stats,
                             "signals": signals,
@@ -1956,7 +1956,7 @@ async def stream_updates(
                     error_data = {
                         "type": "error",
                         "message": str(e),
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": get_polish_time().isoformat()
                     }
                     yield f"data: {json.dumps(error_data)}\n\n"
                 

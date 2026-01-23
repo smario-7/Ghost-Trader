@@ -26,8 +26,14 @@ const dashboardMethods = {
             this.refreshIndicators.stats = '✓';
             setTimeout(() => this.refreshIndicators.stats = '', 2000);
         } catch (error) {
-            this.showError(error.message);
-            if (error.message.includes('Backend nie jest dostępny')) {
+            // Nie pokazuj błędu jeśli to "silent error" (brak API key)
+            if (error && error.silent) {
+                return;
+            }
+            if (error && error.message) {
+                this.showError(error.message);
+            }
+            if (error.message && error.message.includes('Backend nie jest dostępny')) {
                 return;
             }
         } finally {
@@ -53,8 +59,9 @@ const dashboardMethods = {
             this.backendWarning = false;
             this.strategies = data.strategies || [];
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
-            if (error.message.includes('Backend nie jest dostępny')) {
+            if (error.message && error.message.includes('Backend nie jest dostępny')) {
                 return;
             }
         } finally {
@@ -72,8 +79,9 @@ const dashboardMethods = {
             this.refreshIndicators.signals = '✓';
             setTimeout(() => this.refreshIndicators.signals = '', 2000);
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
-            if (error.message.includes('Backend nie jest dostępny')) {
+            if (error.message && error.message.includes('Backend nie jest dostępny')) {
                 return;
             }
         } finally {
@@ -91,8 +99,9 @@ const dashboardMethods = {
             this.refreshIndicators.activity = '✓';
             setTimeout(() => this.refreshIndicators.activity = '', 2000);
         } catch (error) {
+            if (error && error.silent) return;
             this.showError(error.message);
-            if (error.message.includes('Backend nie jest dostępny')) {
+            if (error.message && error.message.includes('Backend nie jest dostępny')) {
                 return;
             }
         } finally {
@@ -108,10 +117,10 @@ const dashboardMethods = {
         }
         
         try {
-            // Pobierz API key (SSE nie obsługuje custom headers, więc używamy query string)
-            const apiKey = await this.getApiKey();
+            // Pobierz API key z sessionStorage (powinien już być ustawiony po załadowaniu danych)
+            const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
             if (!apiKey) {
-                console.error('No API key available for SSE');
+                console.warn('No API key available for SSE - will retry after data loads');
                 return;
             }
             
@@ -163,7 +172,9 @@ const dashboardMethods = {
     // Aktualizuje timestamp ostatniej aktualizacji
     updateLastUpdate() {
         const now = new Date();
-        this.lastUpdate = now.toLocaleTimeString('pl-PL');
+        this.lastUpdate = now.toLocaleTimeString('pl-PL', {
+            timeZone: 'Europe/Warsaw'
+        });
     },
 
     // Wyświetla komunikat błędu
@@ -186,9 +197,23 @@ const dashboardMethods = {
         return 'low';
     },
 
-    // Helper: formatuje timestamp
+    // Helper: formatuje timestamp w strefie czasowej Warsaw
     formatTimestamp(timestamp) {
         if (!timestamp) return '';
-        return new Date(timestamp).toLocaleString('pl-PL');
+        return new Date(timestamp).toLocaleString('pl-PL', {
+            timeZone: 'Europe/Warsaw'
+        });
+    },
+
+    // Aktualizuje informacje o wybranym modelu AI
+    updateModelInfo() {
+        const modelInfo = {
+            'gpt-4o': 'GPT-4o: Najnowszy model. Doskonała analiza makro + news. ~$0.0025/request. Czas: 2-5s.',
+            'gpt-4o-mini': 'GPT-4o Mini (Zalecany): Najlepszy stosunek jakości do ceny. Szybszy i 10x tańszy (~$0.0001/request). Doskonała analiza. Czas: 1-3s.',
+            'gpt-4-turbo': 'GPT-4 Turbo: Głębsza analiza, więcej kontekstu. ~$0.01/request. Czas: 5-10s.',
+            'gpt-4': 'GPT-4: Klasyczny model, sprawdzony. ~$0.03/request. Czas: 5-10s.',
+            'gpt-3.5-turbo': 'GPT-3.5 Turbo: Najtańszy (~$0.0005/request). Podstawowa analiza. Czas: 1-2s.'
+        };
+        this.modelInfoText = modelInfo[this.aiModel] || modelInfo['gpt-4o-mini'];
     }
 };

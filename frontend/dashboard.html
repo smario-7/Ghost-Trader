@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Trading Bot - Dashboard</title>
     
     <!-- TradingView Lightweight Charts -->
@@ -33,11 +36,43 @@
                 <h1>🤖 Trading Bot Dashboard</h1>
                 <p class="subtitle">AI-Powered Trading Signals | OpenAI GPT | Real-time Analysis</p>
             </div>
-            <div style="color: rgba(255, 255, 255, 0.8); font-size: 12px;" x-text="`Ostatnia aktualizacja: ${lastUpdate}`"></div>
+            <div class="header-right">
+                <div class="clock-container">
+                    <div class="clock-time" x-text="currentTime || '--:--:--'"></div>
+                    <div class="clock-date" x-text="currentDate || 'Ładowanie...'"></div>
+                </div>
+                <div style="color: rgba(255, 255, 255, 0.8); font-size: 12px;" x-text="`Ostatnia aktualizacja: ${lastUpdate}`"></div>
+            </div>
         </div>
 
         <div x-show="errorMessage" x-text="errorMessage" class="error"></div>
         <div x-show="successMessage" x-text="successMessage" class="success"></div>
+        
+        <!-- Modal API Key -->
+        <div class="modal" x-show="showApiKeyModal" x-cloak @click.self="showApiKeyModal = false">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 style="color: #f1f5f9;">🔑 Wymagany API Key</h2>
+                </div>
+                <form @submit.prevent="submitApiKey()">
+                    <div class="form-group">
+                        <label>Podaj API Key:</label>
+                        <input type="text" 
+                               x-model="apiKeyInput" 
+                               placeholder="Wpisz API Key z pliku .env"
+                               required
+                               autofocus
+                               style="font-family: monospace;">
+                        <small style="color: #94a3b8; font-size: 12px; display: block; margin-top: 5px;">
+                            API Key znajduje się w pliku .env (zmienna API_KEY)
+                        </small>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn">Potwierdź</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         
         <!-- Komunikat o braku połączenia z backendem -->
         <div x-show="backendWarning" class="card" style="background: #1e293b; border-left: 4px solid #f59e0b; border: 1px solid #f59e0b;">
@@ -82,8 +117,8 @@
                 <div class="model-selector">
                     <label for="model-select" style="display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8;">Wybierz model OpenAI:</label>
                     <select id="model-select" x-model="aiModel" @change="updateModelInfo()">
-                        <option value="gpt-4o">GPT-4o (Zalecany) - Najlepszy stosunek jakości do ceny</option>
-                        <option value="gpt-4o-mini">GPT-4o Mini - Szybszy, tańszy</option>
+                        <option value="gpt-4o-mini">GPT-4o Mini (Zalecany) - Najlepszy stosunek jakości do ceny</option>
+                        <option value="gpt-4o">GPT-4o - Zaawansowana analiza</option>
                         <option value="gpt-4-turbo">GPT-4 Turbo - Głębsza analiza</option>
                         <option value="gpt-4">GPT-4 - Klasyczny</option>
                         <option value="gpt-3.5-turbo">GPT-3.5 Turbo - Ekonomiczny</option>
@@ -797,7 +832,7 @@
     </div>
 
     <!-- Modal szczegółów analizy AI -->
-    <div class="modal" :class="{'show': analysisModal.open}" @click.self="closeAnalysisModal()">
+    <div class="modal" x-show="analysisModal.open" x-cloak @click.self="closeAnalysisModal()">
         <div class="modal-content modal-large">
             <div class="modal-header">
                 <div>
@@ -941,7 +976,7 @@
     </div>
 
     <!-- Modal edycji/dodawania strategii -->
-    <div class="modal" :class="{'show': modal.open}" @click.self="closeModal()">
+    <div class="modal" x-show="modal.open" x-cloak @click.self="closeModal()">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="color: #f1f5f9;" x-text="modal.mode === 'add' ? 'Dodaj strategię' : 'Edytuj strategię'"></h2>

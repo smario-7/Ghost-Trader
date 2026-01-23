@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 from contextlib import contextmanager
+from ..config import get_polish_time
 
 
 class Database:
@@ -729,7 +730,7 @@ class Database:
             updates['enabled_symbols'] = json.dumps(updates['enabled_symbols'])
         
         # Dodaj updated_at
-        updates['updated_at'] = datetime.now().isoformat()
+        updates['updated_at'] = get_polish_time().isoformat()
         
         # Buduj query dynamicznie
         set_clause = ", ".join([f"{key} = ?" for key in updates.keys()])
@@ -901,7 +902,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
-            timestamp = datetime.now().isoformat()
+            timestamp = get_polish_time().isoformat()
             details_json = json.dumps(details) if details else None
             
             cursor.execute("""
@@ -1121,7 +1122,7 @@ class Database:
             try:
                 from datetime import datetime
                 muted_date = datetime.fromisoformat(muted_until.replace('Z', '+00:00'))
-                is_muted = datetime.now() < muted_date
+                is_muted = get_polish_time() < muted_date
             except:
                 is_muted = False
         

@@ -10,6 +10,7 @@ import random
 import requests
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
+from ..config import get_polish_time
 
 
 class MarketDataService:
@@ -116,7 +117,7 @@ class MarketDataService:
         elif 'SPX' in symbol or 'DJI' in symbol:
             base_price = 4500.0
         
-        dates = pd.date_range(end=datetime.now(), periods=num_points, freq=f'{int(hours)}H')
+        dates = pd.date_range(end=get_polish_time(), periods=num_points, freq=f'{int(hours)}H')
         
         # Generuj cenę z realistic volatility
         volatility = 0.02  # 2% volatility

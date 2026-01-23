@@ -4,6 +4,7 @@ Serwis Telegram Bot
 import aiohttp
 from typing import Optional, Dict, Any
 import logging
+from ..config import get_polish_time
 
 
 class TelegramService:
@@ -45,13 +46,13 @@ class TelegramService:
                 from datetime import datetime
                 try:
                     muted_date = datetime.fromisoformat(muted_until.replace('Z', '+00:00'))
-                    if datetime.now() < muted_date:
+                    if get_polish_time() < muted_date:
                         return False, f"Wyciszone do {muted_until}"
                 except:
                     pass
             
             from datetime import datetime
-            now_time = datetime.now().time()
+            now_time = get_polish_time().time()
             
             try:
                 start_time = datetime.strptime(settings.get('allowed_hours_start', '00:00'), '%H:%M').time()
@@ -62,7 +63,7 @@ class TelegramService:
             except:
                 pass
             
-            today = datetime.now().isoweekday()
+            today = get_polish_time().isoweekday()
             allowed_days_str = settings.get('allowed_days', '1,2,3,4,5,6,7')
             
             try:
@@ -189,8 +190,7 @@ class TelegramService:
                 message += f"  • {key}: {formatted_value}\n"
         
         # Dodaj timestamp
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = get_polish_time().strftime("%Y-%m-%d %H:%M:%S")
         message += f"\n<i>Time: {timestamp}</i>"
         
         # Loguj przed wysyłką

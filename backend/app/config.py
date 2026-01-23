@@ -4,7 +4,9 @@ Konfiguracja aplikacji - wszystkie zmienne środowiskowe
 from pydantic_settings import BaseSettings
 from pydantic import Field, validator
 from typing import List, Optional, Dict
+from datetime import datetime, timezone, timedelta
 import os
+import pytz
 
 
 class Settings(BaseSettings):
@@ -20,8 +22,8 @@ class Settings(BaseSettings):
         description="Klucz OpenAI API (opcjonalne - tylko dla funkcji AI)"
     )
     openai_model: str = Field(
-        default="gpt-4o",
-        description="Model OpenAI (gpt-4o, gpt-4-turbo, gpt-3.5-turbo)"
+        default="gpt-4o-mini",
+        description="Model OpenAI (gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo)"
     )
     
     # Baza danych
@@ -272,3 +274,12 @@ try:
 except Exception:
     print("⚠️  Konfiguracja nie może zostać wczytana")
     settings = None
+
+
+def get_polish_time() -> datetime:
+    """Zwraca aktualny czas w strefie czasowej Warszawy (Europe/Warsaw)
+    
+    Automatycznie uwzględnia czas letni (CEST, UTC+2) i zimowy (CET, UTC+1)
+    """
+    warsaw_tz = pytz.timezone('Europe/Warsaw')
+    return datetime.now(warsaw_tz)
