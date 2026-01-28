@@ -1063,3 +1063,148 @@
                 width: 100%;
             }
         }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #475569;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #10b981;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #10b981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Status Classes */
+        .status-active {
+            color: #10b981 !important;
+        }
+
+        .status-paused {
+            color: #f59e0b !important;
+        }
+
+        .status-disabled {
+            color: #ef4444 !important;
+        }
+
+        /* Active Day Button */
+        .btn-secondary.active {
+            background: #10b981 !important;
+            color: white !important;
+            border-color: #10b981 !important;
+        }
+
+        /* Activity Logs Styles */
+        .logs-container {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #1e293b;
+        }
+
+        .logs-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .logs-container::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .logs-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .logs-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .log-entry {
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .log-entry:hover {
+            background-color: rgba(30, 41, 59, 0.6) !important;
+            transform: translateX(2px);
+        }
+
+        .log-llm {
+            border-left-color: #10b981;
+        }
+
+        .log-entry.log-llm {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .log-telegram {
+            border-left-color: #3b82f6;
+        }
+
+        .log-entry.log-telegram {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .log-market_data {
+            border-left-color: #f59e0b;
+        }
+
+        .log-entry.log-market_data {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .log-signal {
+            border-left-color: #ef4444;
+        }
+
+        .log-entry.log-signal {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .log-analysis {
+            border-left-color: #8b5cf6;
+        }
+
+        .log-entry.log-analysis {
+            background-color: rgba(139, 92, 246, 0.1);
+        }

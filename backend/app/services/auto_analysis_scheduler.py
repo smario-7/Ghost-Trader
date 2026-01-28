@@ -86,7 +86,7 @@ class AutoAnalysisScheduler:
         self.logger = logging.getLogger("trading_bot.auto_scheduler")
         
         # Inicjalizuj serwisy
-        self.ai_strategy = AIStrategy(telegram_service=telegram)
+        self.ai_strategy = AIStrategy(telegram_service=telegram, database=database)
         self.aggregator = SignalAggregatorService(database=database)
         
         # Lista symboli do analizy (będzie wczytana z konfiguracji)

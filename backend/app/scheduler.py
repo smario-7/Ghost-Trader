@@ -153,7 +153,7 @@ def setup_scheduler():
         """Task sprawdzający sygnały"""
         try:
             logger.info("⏰ Starting signal check...")
-            start_time = datetime.now()
+            start_time = get_polish_time()
             
             # Sprawdź sygnały
             results = await strategy_service.check_all_signals()
@@ -187,15 +187,57 @@ def setup_scheduler():
             except:
                 pass
     
+    def should_run_task(task_type: str) -> bool:
+        """
+        Sprawdza czy zadanie powinno się wykonać na podstawie konfiguracji
+        
+        Args:
+            task_type: Typ zadania ('signal' lub 'ai')
+        
+        Returns:
+            True jeśli zadanie powinno się wykonać
+        """
+        try:
+            config = db.get_scheduler_config()
+            now = get_polish_time()
+            
+            # Sprawdź ON/OFF
+            if task_type == 'signal' and not config['signal_check_enabled']:
+                return False
+            if task_type == 'ai' and not config['ai_analysis_enabled']:
+                return False
+            
+            # Sprawdź harmonogram godzin
+            start = config[f'{task_type}_hours_start']
+            end = config[f'{task_type}_hours_end']
+            current_time = now.strftime('%H:%M')
+            if not (start <= current_time <= end):
+                return False
+            
+            # Sprawdź dni tygodnia (1=Pn, 7=Nd)
+            weekday = str(now.isoweekday())
+            active_days = [d.strip() for d in config[f'{task_type}_active_days'].split(',')]
+            if weekday not in active_days:
+                return False
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error checking task conditions: {e}")
+            # W przypadku błędu, pozwól zadaniu się wykonać (fail-safe)
+            return True
+    
     def run_async_task():
         """Wrapper do uruchamiania async tasków"""
+        if not should_run_task('signal'):
+            logger.debug("⏸️  Signal check skipped (disabled or outside schedule)")
+            return
         asyncio.run(check_signals_task())
     
     async def auto_analysis_task():
         """Task uruchamiający automatyczne analizy AI"""
         try:
             logger.info("⏰ Starting auto AI analysis cycle...")
-            start_time = datetime.now()
+            start_time = get_polish_time()
             
             results = await auto_scheduler.run_analysis_cycle()
             
@@ -226,6 +268,9 @@ def setup_scheduler():
     
     def run_auto_analysis():
         """Wrapper dla auto analysis"""
+        if not should_run_task('ai'):
+            logger.debug("⏸️  AI analysis skipped (disabled or outside schedule)")
+            return
         asyncio.run(auto_analysis_task())
     
     async def backup_task():
@@ -285,13 +330,39 @@ def setup_scheduler():
         except Exception as e:
             logger.error(f"Error cleaning backups: {e}")
     
-    # Oblicz dynamiczny interwał na podstawie aktywnych strategii
-    dynamic_interval = calculate_dynamic_interval(db, settings.check_interval)
+    def update_scheduler_intervals():
+        """
+        Aktualizuje interwały schedulerów na podstawie konfiguracji z bazy danych
+        Funkcja wywoływana okresowo aby reagować na zmiany konfiguracji
+        """
+        try:
+            config = db.get_scheduler_config()
+            
+            # Usuń stare zadania schedulera (zachowaj backup)
+            schedule.clear('signal_check')
+            schedule.clear('ai_analysis')
+            
+            # Dodaj nowe zadania z aktualnymi interwałami z bazy
+            schedule.every(config['signal_check_interval']).minutes.do(run_async_task).tag('signal_check')
+            schedule.every(config['ai_analysis_interval']).minutes.do(run_auto_analysis).tag('ai_analysis')
+            
+            logger.debug(
+                f"📊 Intervals updated from DB: "
+                f"signals={config['signal_check_interval']}min, "
+                f"AI={config['ai_analysis_interval']}min"
+            )
+        except Exception as e:
+            logger.error(f"Error updating scheduler intervals: {e}")
     
-    # Zaplanuj sprawdzanie sygnałów z dynamicznym interwałem
-    signal_check_job = schedule.every(dynamic_interval).minutes.do(run_async_task)
+    # Pobierz konfigurację z bazy danych
+    scheduler_config = db.get_scheduler_config()
     
-    logger.info(f"📊 Dynamiczny interwał: {dynamic_interval} minut (najkrótszy timeframe aktywnych strategii)")
+    # Zaplanuj sprawdzanie sygnałów z interwałem z bazy
+    schedule.every(scheduler_config['signal_check_interval']).minutes.do(run_async_task).tag('signal_check')
+    logger.info(
+        f"📊 Signal check scheduled (every {scheduler_config['signal_check_interval']} minutes, "
+        f"enabled: {scheduler_config['signal_check_enabled']})"
+    )
     
     # Pokaż informacje o aktywnych strategiach
     active_strategies = db.get_active_strategies()
@@ -301,39 +372,47 @@ def setup_scheduler():
             timeframe = strategy.get('timeframe', '1h')
             logger.info(f"   - {strategy.get('name', 'Unknown')}: {timeframe}")
     else:
-        logger.info("⚠️  Brak aktywnych strategii - używam domyślnego interwału")
+        logger.info("⚠️  Brak aktywnych strategii")
     
     # Zaplanuj backup
     if settings.auto_backup:
-        schedule.every(settings.backup_interval).hours.do(run_backup)
+        schedule.every(settings.backup_interval).hours.do(run_backup).tag('backup')
         logger.info(f"💾 Automatic backup enabled (every {settings.backup_interval}h)")
     
-    # Zaplanuj automatyczne analizy AI (Etap 4)
-    analysis_enabled = settings.analysis_enabled if hasattr(settings, 'analysis_enabled') else True
-    if analysis_enabled:
-        analysis_interval = settings.analysis_interval if hasattr(settings, 'analysis_interval') else 30
-        schedule.every(analysis_interval).minutes.do(run_auto_analysis)
-        logger.info(f"🤖 Auto AI analysis scheduled (every {analysis_interval} minutes)")
-    else:
-        logger.info("⚠️  Auto AI analysis disabled in configuration")
+    # Zaplanuj automatyczne analizy AI
+    schedule.every(scheduler_config['ai_analysis_interval']).minutes.do(run_auto_analysis).tag('ai_analysis')
+    logger.info(
+        f"🤖 Auto AI analysis scheduled (every {scheduler_config['ai_analysis_interval']} minutes, "
+        f"enabled: {scheduler_config['ai_analysis_enabled']})"
+    )
+    
+    # Zaplanuj okresową aktualizację interwałów (co 60 sekund sprawdza czy konfiguracja się zmieniła)
+    schedule.every(60).seconds.do(update_scheduler_intervals).tag('config_check')
+    logger.info("🔄 Config auto-refresh enabled (checks every 60s)")
     
     # Wyślij powiadomienie o starcie
     async def send_startup_notification():
         try:
             active_strategies = db.get_active_strategies()
+            signal_interval = scheduler_config['signal_check_interval']
+            ai_interval = scheduler_config['ai_analysis_interval']
+            
             if active_strategies:
                 timeframes = [s.get('timeframe', '1h') for s in active_strategies]
                 timeframes_str = ', '.join(set(timeframes))
                 message = (
                     f"Trading Bot Scheduler is now running\n"
-                    f"Dynamiczny interwał: {dynamic_interval} min\n"
+                    f"Signal check: {signal_interval} min\n"
+                    f"AI analysis: {ai_interval} min\n"
                     f"Aktywne strategie: {len(active_strategies)}\n"
                     f"Timeframes: {timeframes_str}"
                 )
             else:
                 message = (
                     f"Trading Bot Scheduler is now running\n"
-                    f"Interwał: {dynamic_interval} min (domyślny - brak aktywnych strategii)"
+                    f"Signal check: {signal_interval} min\n"
+                    f"AI analysis: {ai_interval} min\n"
+                    f"Brak aktywnych strategii"
                 )
             
             await telegram.send_alert(

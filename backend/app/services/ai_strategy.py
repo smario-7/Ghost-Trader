@@ -28,13 +28,15 @@ class AIStrategy:
     
     def __init__(
         self,
-        telegram_service: TelegramService = None
+        telegram_service: TelegramService = None,
+        database = None
     ):
         """
         Inicjalizacja strategii AI
         
         Args:
             telegram_service: Serwis Telegram do powiadomień
+            database: Instancja Database do logowania aktywności (opcjonalne)
         """
         self.ai_service = AIAnalysisService()
         self.macro_service = MacroDataService()
@@ -42,6 +44,7 @@ class AIStrategy:
         self.calendar_service = EventCalendarService()
         self.market_data = MarketDataService()
         self.telegram = telegram_service
+        self.database = database
         self.logger = logging.getLogger("trading_bot.ai_strategy")
         self.settings = get_settings()
     
@@ -478,6 +481,25 @@ class AIStrategy:
             )
             tokens_used = self._count_tokens(prompt_text)
             estimated_cost = self._estimate_cost(tokens_used, model=self.settings.openai_model)
+            
+            # Loguj zapytanie do LLM
+            if self.database:
+                try:
+                    self.database.create_activity_log(
+                        log_type='llm',
+                        message=f"OpenAI API call: {self.settings.openai_model}",
+                        symbol=symbol,
+                        details={
+                            'model': self.settings.openai_model,
+                            'tokens_used': tokens_used,
+                            'estimated_cost': estimated_cost,
+                            'prompt_length': len(prompt_text),
+                            'timeframe': timeframe
+                        },
+                        status='success'
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Failed to log LLM request: {e}")
             
             # Przygotuj wyniki w ustandaryzowanym formacie
             result = {

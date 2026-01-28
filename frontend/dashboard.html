@@ -25,6 +25,7 @@
     <script src="js/components/strategies.js"></script>
     <script src="js/components/ai-analysis.js"></script>
     <script src="js/components/charts.js"></script>
+    <script src="js/components/settings.js"></script>
     
     <!-- Main App -->
     <script src="js/main.js"></script>
@@ -88,22 +89,25 @@
                     <li>Sprawdź logi: <code style="background: #0f172a; color: #fbbf24;">docker-compose logs backend</code></li>
                 </ul>
             </div>
-            <button class="btn" @click="checkBackendConnection()" style="background: #f59e0b;">🔄 Sprawdź połączenie ponownie</button>
+            <button class="btn" @click="checkBackendConnection && checkBackendConnection()" style="background: #f59e0b;">🔄 Sprawdź połączenie ponownie</button>
         </div>
 
         <!-- Nawigacja zakładek -->
         <div class="tabs-navigation">
-            <button class="tab-button" :class="{'active': currentView === 'dashboard'}" @click="currentView = 'dashboard'">
+            <button class="tab-button" :class="{'active': currentView === 'dashboard'}" @click="handleTabSwitch && handleTabSwitch('dashboard')">
                 📊 Dashboard
             </button>
-            <button class="tab-button" :class="{'active': currentView === 'strategies'}" @click="currentView = 'strategies'">
+            <button class="tab-button" :class="{'active': currentView === 'strategies'}" @click="handleTabSwitch && handleTabSwitch('strategies')">
                 📋 Strategie
             </button>
-            <button class="tab-button" :class="{'active': currentView === 'ai-analysis'}" @click="currentView = 'ai-analysis'">
+            <button class="tab-button" :class="{'active': currentView === 'ai-analysis'}" @click="handleTabSwitch && handleTabSwitch('ai-analysis')">
                 🧠 AI Analiza
             </button>
-            <button class="tab-button" :class="{'active': currentView === 'charts'}" @click="currentView = 'charts'; if (!chartInitialized) { setTimeout(() => initChart(), 200); }">
+            <button class="tab-button" :class="{'active': currentView === 'charts'}" @click="handleTabSwitch && handleTabSwitch('charts')">
                 📈 Wykresy
+            </button>
+            <button class="tab-button" :class="{'active': currentView === 'settings'}" @click="handleTabSwitch && handleTabSwitch('settings')">
+                ⚙️ Ustawienia
             </button>
         </div>
 
@@ -264,7 +268,7 @@
             <div class="card">
                 <h2>
                     📋 Strategie Tradingowe
-                    <button class="btn btn-small" @click="openModal('add')" style="width: auto; padding: 8px 16px; font-size: 12px;">➕ Dodaj</button>
+                    <button class="btn btn-small" @click="openModal && openModal('add')" style="width: auto; padding: 8px 16px; font-size: 12px;">➕ Dodaj</button>
                 </h2>
                 <div x-show="loading.strategies" class="loading">Ładowanie...</div>
                 <template x-if="!loading.strategies && strategies.length === 0">
@@ -284,8 +288,8 @@
                                     <span x-text="`${strategy.symbol} | ${strategy.timeframe} | ${formatParameters(strategy.parameters)}`"></span>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-small" @click="openModal('edit', strategy.id)">Edytuj</button>
-                                    <button class="btn btn-small btn-danger" @click="deleteStrategy(strategy.id)">Usuń</button>
+                                    <button class="btn btn-small" @click="openModal && openModal('edit', strategy.id)">Edytuj</button>
+                                    <button class="btn btn-small btn-danger" @click="deleteStrategy && deleteStrategy(strategy.id)">Usuń</button>
                                 </div>
                             </div>
                         </template>
@@ -441,7 +445,7 @@
                     <span class="stat-value" x-text="apiCallsToday"></span>
                 </div>
 
-                <button class="btn" style="margin-top: 16px;" @click="runAIAnalysis()">
+                <button class="btn" style="margin-top: 16px;" @click="runAIAnalysis && runAIAnalysis()">
                     🧠 Uruchom analizę AI
                 </button>
             </div>
@@ -494,7 +498,7 @@
                         </div>
 
                         <div style="margin-top: 12px; text-align: center;">
-                            <button class="btn btn-small" @click="showAnalysisDetails(currentAISignal.id)" style="width: auto; padding: 8px 16px;">
+                            <button class="btn btn-small" @click="showAnalysisDetails && showAnalysisDetails(currentAISignal.id)" style="width: auto; padding: 8px 16px;">
                                 📊 Szczegóły analizy
                             </button>
                         </div>
@@ -591,7 +595,7 @@
                         <template x-for="result in aiAnalysisResults" :key="result.id">
                             <div class="analysis-result-item" 
                                  :class="result.final_signal ? result.final_signal.toLowerCase() : ''"
-                                 @click="showAnalysisDetails(result.id)">
+                                 @click="showAnalysisDetails && showAnalysisDetails(result.id)">
                                 
                                 <!-- Header -->
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -767,7 +771,7 @@
                     </label>
                 </div>
                 
-                <button class="btn" @click="triggerManualAnalysis()">
+                <button class="btn" @click="triggerManualAnalysis && triggerManualAnalysis()">
                     🚀 Uruchom analizę ręcznie
                 </button>
             </div>
@@ -890,7 +894,7 @@
                 </div>
                 
                 <!-- Przycisk odświeżania -->
-                <button class="btn-refresh" @click="loadChartData()">
+                <button class="btn-refresh" @click="loadChartData && loadChartData()">
                     🔄 Odśwież
                 </button>
             </div>
@@ -943,7 +947,7 @@
                         </p>
                     </template>
                 </div>
-                <span class="close" @click="closeAnalysisModal()">&times;</span>
+                <span class="close" @click="closeAnalysisModal && closeAnalysisModal()">&times;</span>
             </div>
             
             <!-- Tabs -->
@@ -1079,7 +1083,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="color: #f1f5f9;" x-text="modal.mode === 'add' ? 'Dodaj strategię' : 'Edytuj strategię'"></h2>
-                <span class="close" @click="closeModal()">&times;</span>
+                <span class="close" @click="closeModal && closeModal()">&times;</span>
             </div>
             <form @submit.prevent="saveStrategy()">
                 <div class="form-group">
@@ -1202,10 +1206,302 @@
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" @click="closeModal()">Anuluj</button>
+                    <button type="button" class="btn btn-secondary" @click="closeModal && closeModal()">Anuluj</button>
                     <button type="submit" class="btn">Zapisz</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Settings View -->
+    <div x-show="currentView === 'settings'">
+        <div class="grid">
+            <!-- Przełączniki ON/OFF -->
+            <div class="card">
+                <h2>🔌 Kontrola Systemów</h2>
+                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                    Włącz lub wyłącz sprawdzanie sygnałów i analizy AI bez zatrzymywania aplikacji
+                </p>
+                
+                <div style="margin-bottom: 20px; padding: 12px; background: rgba(15, 23, 42, 0.8); border-radius: 8px; border: 1px solid #334155;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Interwał sprawdzania sygnałów</div>
+                            <div style="font-size: 18px; font-weight: 600; color: #60a5fa;" x-text="(schedulerConfig && schedulerConfig.signal_check_interval) ? schedulerConfig.signal_check_interval + ' min' : '15 min'"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Interwał analiz AI</div>
+                            <div style="font-size: 18px; font-weight: 600; color: #60a5fa;" x-text="(schedulerConfig && schedulerConfig.ai_analysis_interval) ? schedulerConfig.ai_analysis_interval + ' min' : '30 min'"></div>
+                        </div>
+                    </div>
+                    <p style="color: #64748b; font-size: 11px; margin-top: 10px; margin-bottom: 0;">
+                        💡 Aby zmienić interwały, przejdź do sekcji "Interwały Sprawdzania" poniżej
+                    </p>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Signal Check Toggle -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div>
+                            <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 5px;">
+                                📊 Sprawdzanie Sygnałów
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8;">
+                                Automatyczne sprawdzanie strategii tradingowych
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; font-weight: 600;" 
+                                 :class="getStatusClass && getStatusClass('signal_check')"
+                                 x-text="getStatusText && getStatusText('signal_check') || (schedulerConfig && schedulerConfig.signal_check_enabled ? '✅ Aktywne' : '⏸️ Wyłączone')">
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" 
+                                   :checked="schedulerConfig && schedulerConfig.signal_check_enabled === true"
+                                   @change="toggleSignalCheck && toggleSignalCheck()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <!-- AI Analysis Toggle -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                        <div>
+                            <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 5px;">
+                                🤖 Analizy AI
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8;">
+                                Automatyczne analizy GPT z agregacją sygnałów
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; font-weight: 600;" 
+                                 :class="getStatusClass && getStatusClass('ai_analysis')"
+                                 x-text="getStatusText && getStatusText('ai_analysis') || (schedulerConfig && schedulerConfig.ai_analysis_enabled ? '✅ Aktywne' : '⏸️ Wyłączone')">
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" 
+                                   :checked="schedulerConfig && schedulerConfig.ai_analysis_enabled === true"
+                                   @change="toggleAIAnalysis && toggleAIAnalysis()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Interwały -->
+            <div class="card">
+                <h2>⏱️ Interwały Sprawdzania</h2>
+                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                    Ustaw jak często mają być sprawdzane sygnały i wykonywane analizy AI
+                </p>
+                
+                <div class="form-group">
+                    <label>Interwał sprawdzania sygnałów (minuty):</label>
+                    <input type="number" 
+                           x-model.number="schedulerConfig.signal_check_interval"
+                           min="1" 
+                           max="1440"
+                           style="width: 100%;">
+                    <small style="color: #94a3b8;">Zakres: 1-1440 minut (1 dzień). Aktualna wartość: <strong x-text="schedulerConfig.signal_check_interval || 15"></strong> minut</small>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Interwał analiz AI (minuty):</label>
+                    <input type="number" 
+                           x-model.number="schedulerConfig.ai_analysis_interval"
+                           min="5" 
+                           max="1440"
+                           style="width: 100%;">
+                    <small style="color: #94a3b8;">Zakres: 5-1440 minut (1 dzień). Aktualna wartość: <strong x-text="schedulerConfig.ai_analysis_interval || 30"></strong> minut</small>
+                </div>
+                
+                <button class="btn" @click="saveSchedulerConfig && saveSchedulerConfig()" style="margin-top: 20px; width: 100%;">
+                    💾 Zapisz interwały
+                </button>
+            </div>
+            
+            <!-- Harmonogram Sygnałów -->
+            <div class="card">
+                <h2>📅 Harmonogram Sprawdzania Sygnałów</h2>
+                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                    Określ w jakich godzinach i dniach system ma sprawdzać sygnały
+                </p>
+                
+                <div class="form-group">
+                    <label>Godziny pracy:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #94a3b8;">Od:</label>
+                            <input type="time" 
+                                   x-model="schedulerConfig.signal_hours_start"
+                                   style="width: 100%;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #94a3b8;">Do:</label>
+                            <input type="time" 
+                                   x-model="schedulerConfig.signal_hours_end"
+                                   style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Aktywne dni tygodnia:</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                        <template x-for="day in [1,2,3,4,5,6,7]" :key="day">
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    :class="{'active': isDayActive('signal', day)}"
+                                    @click="toggleDay('signal', day)"
+                                    x-text="getDayName(day)"
+                                    style="min-width: 45px; padding: 8px 12px; font-size: 14px;">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                
+                <button class="btn" @click="saveSchedulerConfig()" style="margin-top: 20px; width: 100%;">
+                    💾 Zapisz harmonogram
+                </button>
+            </div>
+            
+            <!-- Harmonogram AI -->
+            <div class="card">
+                <h2>📅 Harmonogram Analiz AI</h2>
+                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                    Określ w jakich godzinach i dniach system ma wykonywać analizy AI
+                </p>
+                
+                <div class="form-group">
+                    <label>Godziny pracy:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #94a3b8;">Od:</label>
+                            <input type="time" 
+                                   x-model="schedulerConfig.ai_hours_start"
+                                   style="width: 100%;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #94a3b8;">Do:</label>
+                            <input type="time" 
+                                   x-model="schedulerConfig.ai_hours_end"
+                                   style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Aktywne dni tygodnia:</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                        <template x-for="day in [1,2,3,4,5,6,7]" :key="day">
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    :class="{'active': isDayActive('ai', day)}"
+                                    @click="toggleDay('ai', day)"
+                                    x-text="getDayName(day)"
+                                    style="min-width: 45px; padding: 8px 12px; font-size: 14px;">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                
+                <button class="btn" @click="saveSchedulerConfig()" style="margin-top: 20px; width: 100%;">
+                    💾 Zapisz harmonogram
+                </button>
+            </div>
+            
+            <!-- Informacje pomocnicze -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>ℹ️ Informacje</h2>
+                <div style="color: #94a3b8; font-size: 14px; line-height: 1.8;">
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="margin-bottom: 10px;">
+                            <strong style="color: #f1f5f9;">⏸️ Wyłączanie systemów:</strong> 
+                            Gdy wyłączysz sprawdzanie sygnałów lub analizy AI, system będzie nadal działał, ale te konkretne funkcje nie będą wykonywane. Nie musisz restartować aplikacji.
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong style="color: #f1f5f9;">🕐 Harmonogram godzin:</strong> 
+                            System będzie sprawdzał sygnały/analizy tylko w określonych godzinach. Poza tymi godzinami zadania będą pomijane.
+                        </li>
+                        <li style="margin-bottom: 10px;">
+                            <strong style="color: #f1f5f9;">📅 Dni tygodnia:</strong> 
+                            Możesz wybrać konkretne dni (np. tylko dni robocze Pn-Pt), w których system ma działać. 1=Poniedziałek, 7=Niedziela.
+                        </li>
+                        <li>
+                            <strong style="color: #f1f5f9;">💡 Optymalizacja kosztów:</strong> 
+                            Ustawiając harmonogram analiz AI możesz ograniczyć koszty OpenAI API (np. analizy tylko w godzinach giełdowych).
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Panel Logów -->
+            <div class="card" style="grid-column: span 2; margin-top: 20px;">
+                <h2>📋 Logi Aktywności</h2>
+                <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">
+                    Każda analiza generuje kilka logów (rozpoczęcie, pobieranie danych, zakończenie, sygnał). 
+                    Użyj filtrów poniżej, aby zobaczyć tylko wybrane typy logów. 
+                    <strong style="color: #f1f5f9;">Jeśli widzisz zbyt dużo logów, zwiększ interwały w sekcji "Interwały Sprawdzania" powyżej.</strong>
+                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" 
+                            :class="{'active': activityLogsFilter === null || activityLogsFilter === undefined}"
+                            @click="activityLogsFilter = null">
+                        Wszystkie
+                    </button>
+                    <button class="btn btn-secondary"
+                            :class="{'active': activityLogsFilter === 'llm'}"
+                            @click="activityLogsFilter = 'llm'">
+                        🤖 LLM
+                    </button>
+                    <button class="btn btn-secondary"
+                            :class="{'active': activityLogsFilter === 'telegram'}"
+                            @click="activityLogsFilter = 'telegram'">
+                        📱 Telegram
+                    </button>
+                    <button class="btn btn-secondary"
+                            :class="{'active': activityLogsFilter === 'market_data'}"
+                            @click="activityLogsFilter = 'market_data'">
+                        📊 Market Data
+                    </button>
+                </div>
+                
+                <div class="logs-container" 
+                     style="height: 400px; overflow-y: auto; background: rgba(15, 23, 42, 0.8); border-radius: 8px; padding: 15px;">
+                    <template x-for="log in (getFilteredActivityLogs ? getFilteredActivityLogs() : [])" :key="log.id">
+                        <div class="log-entry" 
+                             :class="'log-' + log.log_type"
+                             style="padding: 10px; margin-bottom: 8px; border-left: 3px solid; border-radius: 4px; background: rgba(30, 41, 59, 0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 5px;">
+                                        <span x-text="getLogTypeIcon(log.log_type)"></span>
+                                        <span x-text="log.message"></span>
+                                    </div>
+                                    <template x-if="log.details && log.details.tokens_used">
+                                        <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                                            Tokens: <span x-text="log.details.tokens_used"></span>
+                                            <template x-if="log.details.estimated_cost">
+                                                | Cost: $<span x-text="log.details.estimated_cost.toFixed(6)"></span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="log.symbol">
+                                        <div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">
+                                            Symbol: <span x-text="log.symbol"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div style="font-size: 11px; color: #64748b; margin-left: 15px; white-space: nowrap;">
+                                    <span x-text="formatLogTime(log.timestamp)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="getFilteredActivityLogs && getFilteredActivityLogs().length === 0" 
+                         style="text-align: center; color: #94a3b8; padding: 40px;">
+                        Brak logów
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

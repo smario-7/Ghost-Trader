@@ -237,6 +237,36 @@ class Database:
                     (notifications_enabled, allowed_hours_start, allowed_hours_end, allowed_days)
                     VALUES (1, '00:00', '23:59', '1,2,3,4,5,6,7')
                 """)
+            
+            # Tabela konfiguracji schedulera
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS scheduler_config (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    signal_check_enabled BOOLEAN DEFAULT 1,
+                    ai_analysis_enabled BOOLEAN DEFAULT 1,
+                    signal_check_interval INTEGER DEFAULT 15,
+                    ai_analysis_interval INTEGER DEFAULT 30,
+                    signal_hours_start TEXT DEFAULT '00:00',
+                    signal_hours_end TEXT DEFAULT '23:59',
+                    ai_hours_start TEXT DEFAULT '00:00',
+                    ai_hours_end TEXT DEFAULT '23:59',
+                    signal_active_days TEXT DEFAULT '1,2,3,4,5,6,7',
+                    ai_active_days TEXT DEFAULT '1,2,3,4,5,6,7',
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Inicjalizacja domyślnej konfiguracji schedulera jeśli nie istnieje
+            cursor.execute("SELECT COUNT(*) FROM scheduler_config")
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("""
+                    INSERT INTO scheduler_config 
+                    (signal_check_enabled, ai_analysis_enabled, signal_check_interval, ai_analysis_interval,
+                     signal_hours_start, signal_hours_end, ai_hours_start, ai_hours_end,
+                     signal_active_days, ai_active_days)
+                    VALUES (1, 1, 15, 30, '00:00', '23:59', '00:00', '23:59', '1,2,3,4,5,6,7', '1,2,3,4,5,6,7')
+                """)
     
     def check_connection(self) -> bool:
         """Sprawdza połączenie z bazą danych"""
@@ -1017,6 +1047,68 @@ class Database:
             
             return logs
     
+    def get_activity_logs_since(
+        self,
+        last_id: int,
+        log_type: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """
+        Pobiera logi aktywności od określonego ID (dla SSE/polling)
+        
+        Args:
+            last_id: Ostatnie znane ID (pobiera logi o ID > last_id)
+            log_type: Opcjonalny filtr po typie logu
+            limit: Maksymalna liczba logów
+        
+        Returns:
+            Lista nowych logów posortowanych od najstarszych do najnowszych
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if log_type:
+                cursor.execute("""
+                    SELECT id, timestamp, log_type, message, symbol, strategy_name, details, status
+                    FROM activity_logs
+                    WHERE id > ? AND log_type = ?
+                    ORDER BY id ASC
+                    LIMIT ?
+                """, (last_id, log_type, limit))
+            else:
+                cursor.execute("""
+                    SELECT id, timestamp, log_type, message, symbol, strategy_name, details, status
+                    FROM activity_logs
+                    WHERE id > ?
+                    ORDER BY id ASC
+                    LIMIT ?
+                """, (last_id, limit))
+            
+            logs = []
+            for row in cursor.fetchall():
+                log = {
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'log_type': row['log_type'],
+                    'message': row['message'],
+                    'symbol': row['symbol'],
+                    'strategy_name': row['strategy_name'],
+                    'status': row['status']
+                }
+                
+                # Parsuj details z JSON
+                if row['details']:
+                    try:
+                        log['details'] = json.loads(row['details'])
+                    except:
+                        log['details'] = {}
+                else:
+                    log['details'] = {}
+                
+                logs.append(log)
+            
+            return logs
+    
     # ===== OPERACJE NA USTAWIENIACH TELEGRAM =====
     
     def get_telegram_settings(self) -> Dict[str, Any]:
@@ -1143,3 +1235,149 @@ class Database:
         new_state = not settings.get('notifications_enabled', True)
         self.update_telegram_settings({'notifications_enabled': new_state})
         return new_state
+    
+    # ===== OPERACJE NA KONFIGURACJI SCHEDULERA =====
+    
+    def get_scheduler_config(self) -> Dict[str, Any]:
+        """
+        Pobiera konfigurację schedulera z bazy danych
+        
+        Returns:
+            Słownik z konfiguracją schedulera
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM scheduler_config ORDER BY id DESC LIMIT 1
+            """)
+            
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'id': row['id'],
+                    'signal_check_enabled': bool(row['signal_check_enabled']),
+                    'ai_analysis_enabled': bool(row['ai_analysis_enabled']),
+                    'signal_check_interval': row['signal_check_interval'],
+                    'ai_analysis_interval': row['ai_analysis_interval'],
+                    'signal_hours_start': row['signal_hours_start'],
+                    'signal_hours_end': row['signal_hours_end'],
+                    'ai_hours_start': row['ai_hours_start'],
+                    'ai_hours_end': row['ai_hours_end'],
+                    'signal_active_days': row['signal_active_days'],
+                    'ai_active_days': row['ai_active_days'],
+                    'updated_at': row['updated_at'],
+                    'created_at': row['created_at']
+                }
+            
+            # Zwróć wartości domyślne jeśli brak konfiguracji
+            return {
+                'signal_check_enabled': True,
+                'ai_analysis_enabled': True,
+                'signal_check_interval': 15,
+                'ai_analysis_interval': 30,
+                'signal_hours_start': '00:00',
+                'signal_hours_end': '23:59',
+                'ai_hours_start': '00:00',
+                'ai_hours_end': '23:59',
+                'signal_active_days': '1,2,3,4,5,6,7',
+                'ai_active_days': '1,2,3,4,5,6,7'
+            }
+    
+    def update_scheduler_config(self, updates: Dict[str, Any]) -> bool:
+        """
+        Aktualizuje konfigurację schedulera
+        
+        Args:
+            updates: Słownik z polami do aktualizacji
+        
+        Returns:
+            True jeśli zaktualizowano pomyślnie
+        """
+        if not updates:
+            return False
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT id FROM scheduler_config ORDER BY id DESC LIMIT 1")
+            row = cursor.fetchone()
+            
+            if row:
+                # Aktualizuj istniejący rekord
+                set_clause = ", ".join([f"{key} = ?" for key in updates.keys()])
+                set_clause += ", updated_at = CURRENT_TIMESTAMP"
+                values = list(updates.values()) + [row['id']]
+                
+                cursor.execute(f"""
+                    UPDATE scheduler_config SET {set_clause}
+                    WHERE id = ?
+                """, values)
+            else:
+                # Utwórz nowy rekord z podanymi wartościami
+                columns = list(updates.keys())
+                placeholders = ", ".join(["?" for _ in columns])
+                column_names = ", ".join(columns)
+                
+                cursor.execute(f"""
+                    INSERT INTO scheduler_config ({column_names})
+                    VALUES ({placeholders})
+                """, list(updates.values()))
+            
+            return True
+    
+    def get_scheduler_status(self) -> Dict[str, Any]:
+        """
+        Zwraca aktualny status schedulerów (czy są włączone i czy w harmonogramie)
+        
+        Returns:
+            Słownik ze statusem schedulerów
+        """
+        config = self.get_scheduler_config()
+        now = get_polish_time()
+        current_time = now.strftime('%H:%M')
+        weekday = str(now.isoweekday())  # 1=Pn, 7=Nd
+        
+        # Sprawdź czy sprawdzanie sygnałów jest w harmonogramie
+        signal_in_time_window = (
+            config['signal_hours_start'] <= current_time <= config['signal_hours_end']
+        )
+        signal_active_days_list = [d.strip() for d in config['signal_active_days'].split(',')]
+        signal_in_active_days = weekday in signal_active_days_list
+        signal_should_run = (
+            config['signal_check_enabled'] and 
+            signal_in_time_window and 
+            signal_in_active_days
+        )
+        
+        # Sprawdź czy analiza AI jest w harmonogramie
+        ai_in_time_window = (
+            config['ai_hours_start'] <= current_time <= config['ai_hours_end']
+        )
+        ai_active_days_list = [d.strip() for d in config['ai_active_days'].split(',')]
+        ai_in_active_days = weekday in ai_active_days_list
+        ai_should_run = (
+            config['ai_analysis_enabled'] and 
+            ai_in_time_window and 
+            ai_in_active_days
+        )
+        
+        return {
+            'signal_check': {
+                'enabled': config['signal_check_enabled'],
+                'in_time_window': signal_in_time_window,
+                'in_active_days': signal_in_active_days,
+                'should_run': signal_should_run,
+                'interval': config['signal_check_interval']
+            },
+            'ai_analysis': {
+                'enabled': config['ai_analysis_enabled'],
+                'in_time_window': ai_in_time_window,
+                'in_active_days': ai_in_active_days,
+                'should_run': ai_should_run,
+                'interval': config['ai_analysis_interval']
+            },
+            'current_time': current_time,
+            'current_weekday': weekday,
+            'timestamp': now.isoformat()
+        }

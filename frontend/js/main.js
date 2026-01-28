@@ -35,8 +35,15 @@ function tradingBot() {
             activity: false,
             aiAnalysis: false,
             tokenStats: false,
-            analysisConfig: false
+            analysisConfig: false,
+            settings: false
         },
+        
+        // Activity Logs (inicjalizacja - PRZED spread operatorami)
+        activityLogs: [],
+        activityLogsFilter: null,
+        activityLogsLastId: 0,
+        activityLogsPollingInterval: null,
         
         // Komunikaty
         errorMessage: '',
@@ -207,7 +214,8 @@ function tradingBot() {
                     this.loadAIAnalysisResults(),
                     this.loadTokenStatistics(),
                     this.loadAnalysisConfig(),
-                    this.loadMacroData()
+                    this.loadMacroData(),
+                    this.loadSchedulerConfig()
                 ]);
                 
                 this.updateLastUpdate();
@@ -317,7 +325,8 @@ function tradingBot() {
                         this.loadBotActivity(),
                         this.loadAIAnalysisResults(),
                         this.loadTokenStatistics(),
-                        this.loadAnalysisConfig()
+                        this.loadAnalysisConfig(),
+                        this.loadSchedulerConfig()
                     ]);
                     
                     this.updateLastUpdate();
@@ -336,6 +345,48 @@ function tradingBot() {
         ...strategiesMethods,
         ...aiAnalysisMethods,
         ...chartsMethods,
-        ...apiUtils
+        ...apiUtils,
+        ...settingsMethods,
+        
+        // ===== TAB SWITCHING =====
+        
+        handleTabSwitch(newView) {
+            // Zatrzymaj polling logów jeśli wychodzimy z Settings
+            if (this.currentView === 'settings') {
+                try {
+                    this.stopActivityLogsPolling();
+                } catch (e) {
+                    console.warn('Error stopping activity logs polling:', e);
+                }
+            }
+            
+            // Przełącz widok
+            this.currentView = newView;
+            
+            // Specjalne akcje dla różnych widoków
+            if (newView === 'settings') {
+                this.$nextTick(() => {
+                    try {
+                        if (this.loadSchedulerConfig) {
+                            this.loadSchedulerConfig();
+                        }
+                        if (this.loadActivityLogs) {
+                            this.loadActivityLogs();
+                        }
+                        if (this.startActivityLogsPolling) {
+                            this.startActivityLogsPolling();
+                        }
+                    } catch (e) {
+                        console.error('Error initializing settings view:', e);
+                    }
+                });
+            } else if (newView === 'charts' && !this.chartInitialized) {
+                setTimeout(() => {
+                    if (this.initChart) {
+                        this.initChart();
+                    }
+                }, 200);
+            }
+        }
     };
 }

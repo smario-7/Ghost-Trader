@@ -274,6 +274,42 @@ async def get_activity_logs(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/activity-logs/new", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_new_activity_logs(
+    request: Request,
+    last_id: int = Query(0, ge=0, description="Ostatnie znane ID logu"),
+    log_type: Optional[str] = Query(None, description="Filtr po typie logu"),
+    limit: int = Query(100, ge=1, le=500, description="Maksymalna liczba logów"),
+    db: Database = Depends(get_database)
+):
+    """
+    Pobiera nowe logi aktywności od określonego ID (dla polling)
+    
+    Używane przez frontend do real-time aktualizacji logów.
+    Frontend powinien wywoływać ten endpoint co 2-3 sekundy z ostatnim znanym ID.
+    
+    Args:
+        last_id: Ostatnie znane ID (pobiera logi o ID > last_id)
+        log_type: Opcjonalny filtr po typie logu (llm, telegram, market_data, etc.)
+        limit: Maksymalna liczba logów
+    
+    Returns:
+        Lista nowych logów posortowanych od najstarszych do najnowszych
+    """
+    try:
+        logs = db.get_activity_logs_since(last_id=last_id, log_type=log_type, limit=limit)
+        
+        return {
+            "logs": logs,
+            "count": len(logs),
+            "last_id": logs[-1]['id'] if logs else last_id
+        }
+    except Exception as e:
+        logger.error(f"Error getting new activity logs: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/test-activity-logs", dependencies=[Depends(verify_api_key)])
 async def test_activity_logs_endpoint(request: Request):
     """Testowy endpoint do weryfikacji routingu activity-logs"""
@@ -696,6 +732,179 @@ async def toggle_telegram_notifications(
             
     except Exception as e:
         logger.error(f"Error toggling notifications: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== SCHEDULER CONFIG ENDPOINTS =====
+
+@app.get("/scheduler/config", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_scheduler_config(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Pobiera konfigurację schedulera
+    
+    Returns:
+        Konfiguracja schedulera i aktualny status
+    """
+    try:
+        config = db.get_scheduler_config()
+        status = db.get_scheduler_status()
+        
+        return {
+            'success': True,
+            'config': config,
+            'status': status
+        }
+            
+    except Exception as e:
+        logger.error(f"Error getting scheduler config: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/scheduler/config", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def update_scheduler_config(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Aktualizuje konfigurację schedulera
+    
+    Body może zawierać:
+    - signal_check_enabled (bool): włącz/wyłącz sprawdzanie sygnałów
+    - ai_analysis_enabled (bool): włącz/wyłącz analizy AI
+    - signal_check_interval (int): interwał sprawdzania sygnałów (1-1440 min)
+    - ai_analysis_interval (int): interwał analiz AI (5-1440 min)
+    - signal_hours_start (str): godzina rozpoczęcia sprawdzania sygnałów (HH:MM)
+    - signal_hours_end (str): godzina zakończenia sprawdzania sygnałów (HH:MM)
+    - ai_hours_start (str): godzina rozpoczęcia analiz AI (HH:MM)
+    - ai_hours_end (str): godzina zakończenia analiz AI (HH:MM)
+    - signal_active_days (str): dni aktywności sprawdzania sygnałów ('1,2,3,4,5,6,7')
+    - ai_active_days (str): dni aktywności analiz AI ('1,2,3,4,5,6,7')
+    """
+    try:
+        import re
+        
+        body = await request.json()
+        updates = {}
+        
+        # Walidacja i przygotowanie aktualizacji
+        if 'signal_check_enabled' in body:
+            if not isinstance(body['signal_check_enabled'], bool):
+                raise HTTPException(status_code=400, detail="signal_check_enabled musi być boolean")
+            updates['signal_check_enabled'] = body['signal_check_enabled']
+        
+        if 'ai_analysis_enabled' in body:
+            if not isinstance(body['ai_analysis_enabled'], bool):
+                raise HTTPException(status_code=400, detail="ai_analysis_enabled musi być boolean")
+            updates['ai_analysis_enabled'] = body['ai_analysis_enabled']
+        
+        if 'signal_check_interval' in body:
+            interval = body['signal_check_interval']
+            if not isinstance(interval, int) or interval < 1 or interval > 1440:
+                raise HTTPException(
+                    status_code=400,
+                    detail="signal_check_interval musi być liczbą całkowitą 1-1440"
+                )
+            updates['signal_check_interval'] = interval
+        
+        if 'ai_analysis_interval' in body:
+            interval = body['ai_analysis_interval']
+            if not isinstance(interval, int) or interval < 5 or interval > 1440:
+                raise HTTPException(
+                    status_code=400,
+                    detail="ai_analysis_interval musi być liczbą całkowitą 5-1440"
+                )
+            updates['ai_analysis_interval'] = interval
+        
+        # Walidacja godzin (format HH:MM)
+        time_pattern = re.compile(r'^([01]\d|2[0-3]):([0-5]\d)$')
+        
+        for field in ['signal_hours_start', 'signal_hours_end', 'ai_hours_start', 'ai_hours_end']:
+            if field in body:
+                value = body[field]
+                if not isinstance(value, str) or not time_pattern.match(value):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"{field} musi być w formacie HH:MM (00:00-23:59)"
+                    )
+                updates[field] = value
+        
+        # Walidacja dni tygodnia (format: '1,2,3,4,5,6,7')
+        for field in ['signal_active_days', 'ai_active_days']:
+            if field in body:
+                value = body[field]
+                if not isinstance(value, str):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"{field} musi być stringiem"
+                    )
+                # Sprawdź format
+                try:
+                    days = [int(d.strip()) for d in value.split(',')]
+                    if not all(1 <= d <= 7 for d in days):
+                        raise ValueError
+                except:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"{field} musi być w formacie '1,2,3,4,5,6,7' (dni 1-7)"
+                    )
+                updates[field] = value
+        
+        if not updates:
+            raise HTTPException(
+                status_code=400,
+                detail="Brak danych do aktualizacji"
+            )
+        
+        # Aktualizuj konfigurację
+        success = db.update_scheduler_config(updates)
+        
+        if success:
+            new_config = db.get_scheduler_config()
+            return {
+                'success': True,
+                'message': 'Konfiguracja zaktualizowana',
+                'config': new_config
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Nie udało się zaktualizować konfiguracji"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating scheduler config: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/scheduler/status", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_scheduler_status(
+    request: Request,
+    db: Database = Depends(get_database)
+):
+    """
+    Zwraca bieżący status schedulerów
+    
+    Returns:
+        Status pokazujący czy schedulery powinny działać w tym momencie
+    """
+    try:
+        status = db.get_scheduler_status()
+        
+        return {
+            'success': True,
+            'status': status
+        }
+            
+    except Exception as e:
+        logger.error(f"Error getting scheduler status: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1191,7 +1400,7 @@ async def ai_analyze(
         logger.info(f"Starting comprehensive AI analysis for {symbol} ({timeframe})")
         
         # Utwórz instancję AIStrategy
-        ai_strategy = AIStrategy(telegram_service=telegram)
+        ai_strategy = AIStrategy(telegram_service=telegram, database=db)
         
         # Uruchom kompleksową analizę
         analysis = await ai_strategy.comprehensive_analysis(
@@ -1283,7 +1492,7 @@ async def ai_market_overview(
         
         logger.info(f"Generating market overview for {symbol}")
         
-        ai_strategy = AIStrategy(telegram_service=telegram)
+        ai_strategy = AIStrategy(telegram_service=telegram, database=db)
         
         # Użyj comprehensive_analysis jako podstawy
         analysis = await ai_strategy.comprehensive_analysis(
