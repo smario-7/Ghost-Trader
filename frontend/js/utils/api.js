@@ -1,7 +1,9 @@
 // API Helper Functions
 // Funkcje pomocnicze do komunikacji z backendem i formatowania danych
 
-const API_BASE = '/api';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? 'http://localhost:8000' 
+    : '/api';
 
 // Główna funkcja do wykonywania zapytań API
 // Automatycznie dodaje API key z localStorage i obsługuje błędy

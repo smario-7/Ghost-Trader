@@ -1,9 +1,0 @@
-{
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true,
-    "ui-designer@cc-marketplace": true,
-    "bug-fix@cc-marketplace": true,
-    "python-expert@cc-marketplace": true,
-    "frontend-developer@cc-marketplace": true
-  }
-}

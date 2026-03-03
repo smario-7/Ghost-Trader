@@ -165,7 +165,10 @@ const dashboardMethods = {
                 return;
             }
             
-            const url = `/api/stream/ai-updates?api_key=${encodeURIComponent(apiKey)}`;
+            const apiBase = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+                ? 'http://localhost:8000' 
+                : '';
+            const url = `${apiBase}/stream/ai-updates?api_key=${encodeURIComponent(apiKey)}`;
             console.log('Connecting SSE to:', url.replace(apiKey, '***'));
             
             this.sseConnection = new EventSource(url);

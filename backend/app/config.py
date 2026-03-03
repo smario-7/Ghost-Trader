@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: str = Field(
-        default="http://localhost:8080",
+        default="http://localhost:8080,http://localhost:8081",
         description="Dozwolone origins (oddzielone przecinkiem)"
     )
     

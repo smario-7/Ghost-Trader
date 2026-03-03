@@ -1,6 +1,7 @@
 # 🤖 Trading Bot - Rozbudowana Wersja 2.0
 
 ## 📋 Spis treści
+
 - [Przegląd](#przegląd)
 - [Nowe funkcje](#nowe-funkcje)
 - [Wymagania](#wymagania)
@@ -17,6 +18,7 @@
 Trading Bot to system automatycznego generowania sygnałów tradingowych z integracją Telegram. Wersja 2.0 wprowadza kompleksowe zabezpieczenia, walidację danych i profesjonalną strukturę kodu.
 
 ### Architektura
+
 ```
 ┌─────────────┐      ┌─────────────┐      ┌──────────────┐
 │   Backend   │◄────►│  Scheduler  │◄────►│   Database   │
@@ -34,6 +36,7 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 ## ✨ Nowe funkcje v2.0
 
 ### 🔐 Bezpieczeństwo
+
 - ✅ **Zmienne środowiskowe** - zero hardkodowanych wartości
 - ✅ **API Key authentication** - zabezpieczone endpointy
 - ✅ **Rate limiting** - ochrona przed flood
@@ -42,6 +45,7 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 - ✅ **CORS konfiguracja** - kontrolowane origins
 
 ### 📊 Funkcjonalność
+
 - ✅ **Strukturalne logowanie** - rotacja plików, poziomy
 - ✅ **Health checks** - monitoring stanu systemu
 - ✅ **Automatyczne backupy** - zabezpieczenie danych
@@ -49,6 +53,7 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 - ✅ **Statistics API** - metryki i statystyki
 
 ### 🏗️ Kod
+
 - ✅ **Dependency injection** - czysta architektura
 - ✅ **Type hints** - pełna typizacja
 - ✅ **Modularny design** - separacja warstw
@@ -57,6 +62,7 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 ## 📦 Wymagania
 
 ### Minimalne
+
 - **Python**: 3.11.13 (zarządzany przez conda)
 - **Conda**: Miniconda lub Anaconda
 - **Docker**: 20.10+ (opcjonalnie, dla produkcji)
@@ -68,6 +74,7 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 > Zobacz [CONDA_SETUP.md](CONDA_SETUP.md) dla szczegółów konfiguracji.
 
 ### Raspberry Pi 4
+
 - ✅ **Kompatybilny** z ARM64
 - ✅ **Niskoprzekładny** (~5W)
 - ✅ **Stabilny 24/7**
@@ -122,6 +129,7 @@ python -m app.main
 ```
 
 **Automatyczna aktywacja środowiska:**
+
 ```bash
 # Zainstaluj direnv
 sudo apt install direnv  # Ubuntu/Debian
@@ -254,6 +262,10 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 cd backend
 source ../venv/bin/activate
 python -m app.scheduler
+
+# Terminal 3 - Frontend
+cd frontend
+python -m http.server 8081
 ```
 
 ## 📡 API
@@ -261,10 +273,12 @@ python -m app.scheduler
 ### Endpoints
 
 #### Public
+
 - `GET /` - Info o API
 - `GET /health` - Health check
 
 #### Protected (wymagają X-API-Key header)
+
 - `GET /strategies` - Lista strategii
 - `POST /strategies` - Utwórz strategię
 - `PUT /strategies/{id}` - Aktualizuj strategię
@@ -312,6 +326,7 @@ curl -X POST http://localhost:8000/test-telegram \
 ### Dokumentacja interaktywna
 
 Po uruchomieniu (tylko development):
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -352,6 +367,7 @@ curl -H "X-API-Key: $API_KEY" \
 **📖 Pełna dokumentacja: [docs/AI_SIGNAL_INTEGRATION.md](docs/AI_SIGNAL_INTEGRATION.md)**
 
 Kompleksowy przewodnik zawierający:
+
 - 📊 Szczegółowy opis architektury i algorytmu głosowania większościowego
 - 🔌 Wszystkie API endpoints z przykładami użycia
 - ⚙️ Konfigurację i zmienne środowiskowe
@@ -362,29 +378,33 @@ Kompleksowy przewodnik zawierający:
 
 ### Koszty OpenAI
 
-| Model | Koszt/analiza | 10 symboli (30 min) |
-|-------|---------------|---------------------|
-| GPT-4o | $0.025 | $360/miesiąc |
-| GPT-4o-mini | $0.0025 | $36/miesiąc |
+
+| Model       | Koszt/analiza | 10 symboli (30 min) |
+| ----------- | ------------- | ------------------- |
+| GPT-4o      | $0.025        | $360/miesiąc        |
+| GPT-4o-mini | $0.0025       | $36/miesiąc         |
+
 
 **Rekomendacja:** Użyj GPT-4o-mini (10x taniej, nadal bardzo dobra jakość)
 
 ## 🔒 Bezpieczeństwo
 
 ### Przeczytaj SECURITY.md
+
 ```bash
 cat docs/SECURITY.md
 ```
 
 ### Checklist
-- [ ] .env w .gitignore
-- [ ] API Key wygenerowany (min 32 znaki)
-- [ ] CORS origins skonfigurowane
-- [ ] Rate limiting włączony
-- [ ] Logowanie działa
-- [ ] Backupy włączone
-- [ ] HTTPS w produkcji (Caddy/Nginx)
-- [ ] Firewall skonfigurowany
+
+- .env w .gitignore
+- API Key wygenerowany (min 32 znaki)
+- CORS origins skonfigurowane
+- Rate limiting włączony
+- Logowanie działa
+- Backupy włączone
+- HTTPS w produkcji (Caddy/Nginx)
+- Firewall skonfigurowany
 
 ### Generowanie bezpiecznego API Key
 
@@ -399,6 +419,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 ## 🐛 Troubleshooting
 
 ### Problem: "Config error"
+
 ```bash
 # Sprawdź .env
 cat .env | grep -v "^#"
@@ -408,6 +429,7 @@ docker-compose exec backend python -c "from app.config import get_settings; s=ge
 ```
 
 ### Problem: "Telegram nie wysyła"
+
 ```bash
 # Sprawdź token
 curl https://api.telegram.org/bot<TOKEN>/getMe
@@ -421,6 +443,7 @@ docker-compose logs backend | grep telegram
 ```
 
 ### Problem: "Database locked"
+
 ```bash
 # Zatrzymaj scheduler przed ręcznymi operacjami
 docker-compose stop scheduler
@@ -433,6 +456,7 @@ docker-compose start scheduler
 ```
 
 ### Problem: "Rate limit exceeded"
+
 ```bash
 # Zwiększ limit w .env
 RATE_LIMIT_PER_MINUTE=120
@@ -442,6 +466,7 @@ docker-compose restart backend
 ```
 
 ### Problem: "Port already in use"
+
 ```bash
 # Zmień port w .env
 API_PORT=8001
@@ -544,12 +569,14 @@ docker-compose logs -f
 ## 🤝 Wsparcie
 
 ### Problemy?
+
 1. Sprawdź logi: `docker-compose logs`
 2. Zobacz [Troubleshooting](#troubleshooting)
 3. Przeczytaj [SECURITY.md](docs/SECURITY.md)
 
 ### Pytania?
-- Email: support@yourdomain.com
+
+- Email: [support@yourdomain.com](mailto:support@yourdomain.com)
 - Issues: GitHub Issues
 
 ## 📝 Licencja

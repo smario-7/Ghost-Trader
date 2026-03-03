@@ -36,6 +36,8 @@ cd backend && pytest -m unit               # Fast, isolated tests
 cd backend && pytest -m integration        # Component interaction tests
 cd backend && pytest -m api                # API endpoint tests
 cd backend && pytest -m database           # Database operation tests
+cd backend && pytest -m e2e                # End-to-end tests
+cd backend && pytest -m "not slow"         # Exclude slow tests
 
 # Run with coverage
 cd backend && pytest --cov=app tests/
@@ -51,6 +53,12 @@ make clean
 
 # Verify configuration
 docker-compose exec backend python -c "from app.config import get_settings; print('Config OK')"
+
+# Check Python syntax
+python -m py_compile app/main.py
+
+# Run with verbose output
+pytest -vv --tb=short
 ```
 
 ## Code Style Guidelines
@@ -144,3 +152,22 @@ docker-compose exec backend python -c "from app.config import get_settings; prin
 - Levels: DEBUG (detailed info), INFO (normal flow), WARNING (recoverable issues), ERROR (failures)
 - Include context: `logger.info(f"Processed {strategy.name} for {symbol}")`
 - Structured logging for production debugging
+
+### Frontend (Alpine.js)
+- Follow Alpine.js documentation: https://alpinejs.dev/start-here
+- Use vanilla JS components in `frontend/js/components/`
+- Components communicate via custom events
+- Dashboard at `/` serves the UI
+
+## Known Issues
+
+### Yahoo Finance API
+- Czasami Yahoo Finance nie zwraca danych (rate limiting lub niedostępność)
+- Objawia się jako "No price data found, symbol may be delisted"
+- Wykresy mogą nie działać, ale reszta aplikacji działa
+- Rozwiązanie: poczekaj lub użyj VPN
+
+### Local Development vs Docker
+- Lokalnie: frontend na `http://localhost:8081`, backend na `http://localhost:8000`
+- Docker: frontend na `http://localhost:8080`, backend przez nginx proxy
+- Kod frontendowy automatycznie wykrywa tryb przez `window.location.hostname`
