@@ -1,6 +1,6 @@
-# 🤖 Trading Bot - Rozbudowana Wersja 2.0
+# Trading Bot - Rozbudowana Wersja 2.0
 
-## 📋 Spis treści
+## Spis treści
 
 - [Przegląd](#przegląd)
 - [Nowe funkcje](#nowe-funkcje)
@@ -8,12 +8,13 @@
 - [Instalacja](#instalacja)
 - [Konfiguracja](#konfiguracja)
 - [Uruchomienie](#uruchomienie)
+- [Deployment](#deployment)
 - [API](#api)
 - [AI Signal Integration](#ai-signal-integration)
 - [Bezpieczeństwo](#bezpieczeństwo)
 - [Troubleshooting](#troubleshooting)
 
-## 🎯 Przegląd
+## Przegląd
 
 Trading Bot to system automatycznego generowania sygnałów tradingowych z integracją Telegram. Wersja 2.0 wprowadza kompleksowe zabezpieczenia, walidację danych i profesjonalną strukturę kodu.
 
@@ -33,33 +34,33 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
         └───────────────┘
 ```
 
-## ✨ Nowe funkcje v2.0
+## Nowe funkcje v2.0
 
-### 🔐 Bezpieczeństwo
+### Bezpieczeństwo
 
-- ✅ **Zmienne środowiskowe** - zero hardkodowanych wartości
-- ✅ **API Key authentication** - zabezpieczone endpointy
-- ✅ **Rate limiting** - ochrona przed flood
-- ✅ **Walidacja Pydantic** - bezpieczne dane wejściowe
-- ✅ **Prepared statements** - ochrona przed SQL injection
-- ✅ **CORS konfiguracja** - kontrolowane origins
+- **Zmienne środowiskowe** - zero hardkodowanych wartości
+- **API Key authentication** - zabezpieczone endpointy
+- **Rate limiting** - ochrona przed flood
+- **Walidacja Pydantic** - bezpieczne dane wejściowe
+- **Prepared statements** - ochrona przed SQL injection
+- **CORS konfiguracja** - kontrolowane origins
 
-### 📊 Funkcjonalność
+### Funkcjonalność
 
-- ✅ **Strukturalne logowanie** - rotacja plików, poziomy
-- ✅ **Health checks** - monitoring stanu systemu
-- ✅ **Automatyczne backupy** - zabezpieczenie danych
-- ✅ **Error handling** - globalna obsługa błędów
-- ✅ **Statistics API** - metryki i statystyki
+- **Strukturalne logowanie** - rotacja plików, poziomy
+- **Health checks** - monitoring stanu systemu
+- **Automatyczne backupy** - zabezpieczenie danych
+- **Error handling** - globalna obsługa błędów
+- **Statistics API** - metryki i statystyki
 
-### 🏗️ Kod
+### Kod
 
-- ✅ **Dependency injection** - czysta architektura
-- ✅ **Type hints** - pełna typizacja
-- ✅ **Modularny design** - separacja warstw
-- ✅ **Docker ready** - łatwy deployment
+- **Dependency injection** - czysta architektura
+- **Type hints** - pełna typizacja
+- **Modularny design** - separacja warstw
+- **Docker ready** - łatwy deployment
 
-## 📦 Wymagania
+## Wymagania
 
 ### Minimalne
 
@@ -70,16 +71,15 @@ Trading Bot to system automatycznego generowania sygnałów tradingowych z integ
 - **RAM**: 512MB (Raspberry Pi compatible!)
 - **Dysk**: 1GB
 
-> 💡 **Środowisko conda**: Projekt używa środowiska conda `ghost-trader` z Python 3.11.13.
-> Zobacz [CONDA_SETUP.md](CONDA_SETUP.md) dla szczegółów konfiguracji.
+> **Środowisko conda**: Utwórz środowisko z pliku `environment.yml` (conda env create -f environment.yml), aktywuj: `conda activate ghost-trader`.
 
 ### Raspberry Pi 4
 
-- ✅ **Kompatybilny** z ARM64
-- ✅ **Niskoprzekładny** (~5W)
-- ✅ **Stabilny 24/7**
+- **Kompatybilny** z ARM64
+- **Niskoprzekładny** (~5W)
+- **Stabilny 24/7**
 
-## 🚀 Instalacja
+## Instalacja
 
 ### Metoda 1: Docker (zalecana)
 
@@ -169,7 +169,7 @@ uvicorn app.main:app --reload
 python -m app.scheduler
 ```
 
-## ⚙️ Konfiguracja
+## Konfiguracja
 
 ### 1. Telegram Bot
 
@@ -216,16 +216,27 @@ RATE_LIMIT_PER_MINUTE=60
 
 # CORS
 CORS_ORIGINS=http://localhost:8080,http://localhost:3000
+
+# ----- AI Signal Integration -----
+ANALYSIS_INTERVAL=30
+ANALYSIS_ENABLED=true
+ANALYSIS_SYMBOLS_LIMIT=10
+NOTIFICATION_THRESHOLD=60
+# Wagi agregatora (suma=100): AI, Technical, Macro, News – patrz .env.example
+AGGREGATOR_WEIGHT_AI=40
+AGGREGATOR_WEIGHT_TECHNICAL=30
+AGGREGATOR_WEIGHT_MACRO=20
+AGGREGATOR_WEIGHT_NEWS=10
 ```
 
 ### 3. Walidacja konfiguracji
 
 ```bash
 # Sprawdź czy wszystko OK
-docker-compose exec backend python -c "from app.config import get_settings; print('✅ Config OK')"
+docker-compose exec backend python -c "from app.config import get_settings; print('Config OK')"
 ```
 
-## 🏃 Uruchomienie
+## Uruchomienie
 
 ### Docker
 
@@ -253,22 +264,28 @@ docker-compose up -d --build
 ### Ręcznie
 
 ```bash
-# Terminal 1 - Backend
+# Terminal 1 - Backend (venv w katalogu backend)
 cd backend
-source ../venv/bin/activate
+python3.11 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # Terminal 2 - Scheduler
 cd backend
-source ../venv/bin/activate
+source venv/bin/activate
 python -m app.scheduler
 
-# Terminal 3 - Frontend
+# Terminal 3 - Frontend (dev)
 cd frontend
 python -m http.server 8081
+# W Dockerze dashboard jest na http://localhost:8080 (nginx)
 ```
 
-## 📡 API
+## Deployment
+
+Wdrożenie w produkcji (np. integracja z n8n, osobna domena): w folderze **deployment/** znajdziesz [DEPLOYMENT_GUIDE.md](deployment/DEPLOYMENT_GUIDE.md) (instrukcja krok po kroku), `docker-compose.integrated.yml` oraz przykładowy `.env` do konfiguracji.
+
+## API
 
 ### Endpoints
 
@@ -279,12 +296,15 @@ python -m http.server 8081
 
 #### Protected (wymagają X-API-Key header)
 
-- `GET /strategies` - Lista strategii
-- `POST /strategies` - Utwórz strategię
-- `PUT /strategies/{id}` - Aktualizuj strategię
-- `DELETE /strategies/{id}` - Usuń strategię
-- `POST /check-signals` - Sprawdź sygnały
-- `POST /test-telegram` - Test Telegram
+- **Strategie:** `GET/POST/PUT/DELETE /strategies`, `/strategies/{id}`
+- **Sygnały:** `POST /check-signals`, `GET /signals/recent`, `GET /signals/strategy/{id}`
+- **AI:** `GET/PUT /ai/analysis-results`, `/ai/analysis-config`, `POST /ai/trigger-analysis`, `GET /ai/token-statistics`
+- **Stream:** `GET /stream/updates`, `GET /stream/ai-updates` (SSE)
+- **Telegram:** `/telegram/*` (test, ustawienia, mute)
+- **Scheduler:** `GET/PUT /scheduler/config`, `GET /scheduler/status`
+- **Inne:** `/activity-logs`, `/statistics`, `POST /test-telegram`, `/chart-data`, `/macro-data`
+
+Pełna lista endpointów: **Swagger UI** po uruchomieniu – `http://localhost:8000/docs`
 
 ### Przykłady użycia
 
@@ -330,7 +350,7 @@ Po uruchomieniu (tylko development):
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
-## 🤖 AI Signal Integration
+## AI Signal Integration
 
 System **AI Signal Integration** łączy 4 źródła analiz (AI, Technical, Macro, News) w jeden sygnał tradingowy używając głosowania większościowego.
 
@@ -364,17 +384,17 @@ curl -H "X-API-Key: $API_KEY" \
 
 ### Dokumentacja
 
-**📖 Pełna dokumentacja: [docs/AI_SIGNAL_INTEGRATION.md](docs/AI_SIGNAL_INTEGRATION.md)**
+**Pełna dokumentacja: [docs/README_AI.md](docs/README_AI.md)**
 
 Kompleksowy przewodnik zawierający:
 
-- 📊 Szczegółowy opis architektury i algorytmu głosowania większościowego
-- 🔌 Wszystkie API endpoints z przykładami użycia
-- ⚙️ Konfigurację i zmienne środowiskowe
-- 💰 Szczegółowe szacunki kosztów OpenAI
-- 🎯 Best practices i optymalizację
-- 🔧 Troubleshooting i rozwiązywanie problemów
-- 🧪 Testy i przykłady kodu
+- Szczegółowy opis architektury i algorytmu głosowania większościowego
+- Wszystkie API endpoints z przykładami użycia
+- Konfigurację i zmienne środowiskowe
+- Szczegółowe szacunki kosztów OpenAI
+- Best practices i optymalizację
+- Troubleshooting i rozwiązywanie problemów
+- Testy i przykłady kodu
 
 ### Koszty OpenAI
 
@@ -387,13 +407,7 @@ Kompleksowy przewodnik zawierający:
 
 **Rekomendacja:** Użyj GPT-4o-mini (10x taniej, nadal bardzo dobra jakość)
 
-## 🔒 Bezpieczeństwo
-
-### Przeczytaj SECURITY.md
-
-```bash
-cat docs/SECURITY.md
-```
+## Bezpieczeństwo
 
 ### Checklist
 
@@ -416,7 +430,7 @@ openssl rand -hex 32
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problem: "Config error"
 
@@ -476,17 +490,26 @@ ports:
   - "8001:8000"
 ```
 
-## 📁 Struktura projektu
+## Struktura projektu
 
 ```
 trading-bot/
 ├── backend/
 │   ├── app/
+│   │   ├── api/                   # Routery HTTP
+│   │   │   ├── health.py, strategies.py, signals.py
+│   │   │   ├── telegram.py, scheduler.py, ai.py
+│   │   │   ├── streams.py, statistics.py, activity.py
+│   │   │   └── chart_data.py
 │   │   ├── models/
 │   │   │   └── models.py          # Modele Pydantic
 │   │   ├── services/
+│   │   │   ├── strategy_service.py
+│   │   │   ├── market_data_service.py
 │   │   │   ├── telegram_service.py
-│   │   │   └── strategy_service.py
+│   │   │   ├── ai_strategy.py
+│   │   │   ├── auto_analysis_scheduler.py
+│   │   │   └── signal_aggregator_service.py
 │   │   ├── utils/
 │   │   │   ├── database.py
 │   │   │   └── logger.py
@@ -495,19 +518,28 @@ trading-bot/
 │   │   └── scheduler.py           # Scheduler
 │   ├── Dockerfile
 │   └── requirements.txt
+├── frontend/
+│   ├── dashboard.html
+│   ├── js/components/             # Alpine.js
+│   └── css/
+├── deployment/
+│   ├── DEPLOYMENT_GUIDE.md        # Instrukcja wdrożenia (n8n, produkcja)
+│   ├── docker-compose.integrated.yml
+│   └── .env.example
 ├── data/                          # Persistent data (gitignored)
 │   ├── trading_bot.db
 │   ├── logs/
 │   └── backups/
 ├── docs/
-│   └── SECURITY.md                # Dokumentacja bezpieczeństwa
+│   ├── README_AI.md               # Dokumentacja AI
+│   └── STRUKTURA.txt
 ├── .env                           # Konfiguracja (gitignored)
 ├── .env.example                   # Przykład konfiguracji
 ├── docker-compose.yml
 └── README.md
 ```
 
-## 📊 Monitoring
+## Monitoring
 
 ### Logi
 
@@ -547,7 +579,7 @@ cp data/backups/trading_bot_YYYYMMDD_HHMMSS.db data/trading_bot.db
 docker-compose start backend scheduler
 ```
 
-## 🔄 Aktualizacje
+## Aktualizacje
 
 ```bash
 # Zatrzymaj
@@ -566,24 +598,23 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-## 🤝 Wsparcie
+## Wsparcie
 
 ### Problemy?
 
 1. Sprawdź logi: `docker-compose logs`
 2. Zobacz [Troubleshooting](#troubleshooting)
-3. Przeczytaj [SECURITY.md](docs/SECURITY.md)
 
 ### Pytania?
 
 - Email: [support@yourdomain.com](mailto:support@yourdomain.com)
 - Issues: GitHub Issues
 
-## 📝 Licencja
+## Licencja
 
 MIT License - użyj jak chcesz!
 
-## 🎉 Gotowe!
+## Gotowe!
 
 ```bash
 # Quick start
@@ -592,7 +623,7 @@ nano .env  # Uzupełnij TOKEN, CHAT_ID, API_KEY
 docker-compose up -d
 docker-compose logs -f
 
-# Done! 🚀
+# Done!
 ```
 
-**Szczęśliwego tradingu! 📈**
+**Szczęśliwego tradingu!**
