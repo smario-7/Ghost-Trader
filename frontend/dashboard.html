@@ -567,7 +567,7 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                     <select x-model="aiAnalysisFilter.symbol" @change="loadAIAnalysisResults()" style="flex: 1; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 8px; color: #e2e8f0;">
                         <option value="">Wszystkie symbole</option>
-                        <template x-for="symbol in uniqueSymbols" :key="symbol">
+                        <template x-for="symbol in getAllSymbolsList()" :key="symbol">
                             <option :value="symbol" x-text="symbol"></option>
                         </template>
                     </select>

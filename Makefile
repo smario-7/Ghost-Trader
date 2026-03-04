@@ -1,4 +1,4 @@
-.PHONY: help setup activate install update clean test docker-up docker-down docker-logs
+.PHONY: help setup activate install update clean test test-cov lint format docker-up docker-down docker-logs
 
 # Domyślny cel - wyświetla pomoc
 help:
@@ -10,6 +10,9 @@ help:
 	@echo "  make update      - Zaktualizuj środowisko z environment.yml"
 	@echo "  make clean       - Wyczyść pliki cache i tymczasowe"
 	@echo "  make test        - Uruchom testy"
+	@echo "  make test-cov    - Uruchom testy z raportem pokrycia kodu"
+	@echo "  make lint        - Sprawdź kod (ruff check)"
+	@echo "  make format      - Sformatuj kod (ruff format)"
 	@echo "  make docker-up   - Uruchom aplikację w Docker"
 	@echo "  make docker-down - Zatrzymaj Docker"
 	@echo "  make docker-logs - Pokaż logi Docker"
@@ -55,7 +58,22 @@ clean:
 # Uruchom testy
 test:
 	@echo "Uruchamiam testy..."
-	cd backend && pytest tests/ -v
+	cd backend && python -m pytest tests/ -v
+
+# Uruchom testy z raportem pokrycia kodu
+test-cov:
+	@echo "Uruchamiam testy z pokryciem..."
+	cd backend && python -m pytest tests/ --cov=app --cov-report=term-missing -v
+
+# Lint (wymaga: pip install ruff)
+lint:
+	@echo "Sprawdzam kod (ruff)..."
+	cd backend && python -m ruff check app/ tests/
+
+# Format (wymaga: pip install ruff)
+format:
+	@echo "Formatuję kod (ruff)..."
+	cd backend && python -m ruff format app/ tests/
 
 # Docker - uruchom
 docker-up:

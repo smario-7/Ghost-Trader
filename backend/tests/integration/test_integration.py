@@ -3,14 +3,10 @@ Test integracyjny dla AIStrategy.comprehensive_analysis() + SignalAggregatorServ
 """
 import pytest
 import asyncio
-import sys
-from pathlib import Path
-
-# Dodaj katalog główny do PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.signal_aggregator_service import SignalAggregatorService
 from app.services.ai_strategy import AIStrategy
+from app.services.ai import tokenizer, indicators as indicators_mod, macro as macro_mod, news as news_mod
 
 
 class MockDatabase:
@@ -122,22 +118,20 @@ class TestIntegration:
     
     @pytest.mark.asyncio
     async def test_token_counting_and_cost_estimation(self, ai_strategy):
-        """Test liczenia tokenów i szacowania kosztów"""
-        # Test metod pomocniczych
+        """Test liczenia tokenów i szacowania kosztów (moduł tokenizer)."""
         text = "This is a test prompt for token counting. " * 100
-        tokens = ai_strategy._count_tokens(text)
-        
+        tokens = tokenizer.count_tokens(text)
+
         assert tokens > 0
         print(f"\nTokens estimated: {tokens}")
-        
-        # Test szacowania kosztów
-        cost_gpt4o = ai_strategy._estimate_cost(tokens, "gpt-4o")
-        cost_gpt4o_mini = ai_strategy._estimate_cost(tokens, "gpt-4o-mini")
-        
+
+        cost_gpt4o = tokenizer.estimate_cost(tokens, "gpt-4o")
+        cost_gpt4o_mini = tokenizer.estimate_cost(tokens, "gpt-4o-mini")
+
         assert cost_gpt4o > 0
         assert cost_gpt4o_mini > 0
-        assert cost_gpt4o > cost_gpt4o_mini  # gpt-4o jest droższy
-        
+        assert cost_gpt4o > cost_gpt4o_mini
+
         print(f"Estimated cost (gpt-4o): ${cost_gpt4o:.6f}")
         print(f"Estimated cost (gpt-4o-mini): ${cost_gpt4o_mini:.6f}")
     
@@ -161,7 +155,7 @@ class TestIntegration:
             }
         }
         
-        result = ai_strategy._analyze_technical_signal(indicators)
+        result = indicators_mod.analyze_technical_signal(indicators)
         
         assert "signal" in result
         assert "confidence" in result
@@ -189,7 +183,7 @@ class TestIntegration:
             }
         }
         
-        result = ai_strategy._analyze_macro_signal(macro_data)
+        result = macro_mod.analyze_macro_signal(macro_data)
         
         assert "signal" in result
         assert "confidence" in result
@@ -211,7 +205,7 @@ class TestIntegration:
             {"sentiment": "positive", "title": "Tech stocks surge"}
         ]
         
-        result = ai_strategy._analyze_news_sentiment(news)
+        result = news_mod.analyze_news_sentiment(news)
         
         assert "sentiment" in result
         assert "score" in result

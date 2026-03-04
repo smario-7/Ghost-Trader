@@ -21,7 +21,14 @@ async def get_statistics(
     request: Request,
     service=Depends(get_strategy_service)
 ) -> Dict[str, Any]:
-    """Pobiera statystyki systemu"""
+    """Pobiera statystyki systemu (strategie, sygnały, uptime).
+
+    Returns:
+        Słownik ze statystykami.
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         stats = service.get_statistics()
         return stats
@@ -36,7 +43,14 @@ async def test_telegram(
     request: Request,
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Testuje połączenie z Telegram"""
+    """Wysyła testową wiadomość na Telegram.
+
+    Returns:
+        Słownik z "success" i "message".
+
+    Raises:
+        HTTPException: 500 przy błędzie wysyłki.
+    """
     try:
         result = await telegram.send_message("🧪 Test połączenia - Trading Bot")
         return {"success": result, "message": "Wiadomość wysłana"}

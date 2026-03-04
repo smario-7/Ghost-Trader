@@ -3,11 +3,11 @@ Test integracyjny dla Etapu 6 - Dashboard AI Analysis
 """
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
-
-from utils.database import Database
 import json
 from datetime import datetime
+
+from app.utils.database import Database
+
 
 def test_database_methods():
     """Test metod bazy danych dla Etapu 6"""
@@ -113,10 +113,10 @@ def test_database_methods():
     print("=" * 60)
     
     # Cleanup
-    import os
     if os.path.exists('data/test_etap6.db'):
         os.remove('data/test_etap6.db')
         print("\n🧹 Test database cleaned up")
+
 
 def test_api_endpoints_structure():
     """Test struktury endpointów API"""
@@ -124,7 +124,7 @@ def test_api_endpoints_structure():
     print("TEST: API Endpoints Structure")
     print("=" * 60)
     
-    from main import app
+    from app.main import app
     
     # Pobierz wszystkie route'y
     routes = [route.path for route in app.routes if hasattr(route, 'path')]
@@ -157,6 +157,7 @@ def test_api_endpoints_structure():
         print(f"  - {route}")
     
     print("=" * 60)
+
 
 if __name__ == '__main__':
     try:

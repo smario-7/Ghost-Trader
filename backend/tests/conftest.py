@@ -1,6 +1,10 @@
 """
 Wspólne fixtures i mocki dla wszystkich testów
 """
+import os
+
+os.environ["API_KEY"] = "test-api-key-32-characters-long-12345"
+
 import pytest
 import sys
 from pathlib import Path
@@ -17,14 +21,12 @@ from app.utils.database import Database
 # ===== DATABASE FIXTURES =====
 
 @pytest.fixture
-def test_db():
+def test_db(tmp_path):
     """
-    Tymczasowa baza danych w pamięci dla testów
-    
-    Tworzy czystą bazę danych SQLite w pamięci, inicjalizuje wszystkie tabele
-    i zwraca gotową do użycia instancję Database.
+    Tymczasowa baza danych dla testów (plik w katalogu tymczasowym pytest).
     """
-    db = Database(":memory:")
+    db_path = str(tmp_path / "test.db")
+    db = Database(db_path)
     db.initialize()
     yield db
 

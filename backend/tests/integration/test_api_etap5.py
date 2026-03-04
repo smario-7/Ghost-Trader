@@ -453,8 +453,10 @@ def client():
 
 @pytest.fixture
 def mock_db(mocker):
-    """Mock dla Database"""
-    return mocker.patch('app.main.Database')
+    """Mock dla get_database – zwraca mock z metodami bazy."""
+    mock = mocker.MagicMock()
+    mocker.patch('app.api.dependencies.get_database', return_value=mock)
+    return mock
 
 
 @pytest.fixture

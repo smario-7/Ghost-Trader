@@ -2,14 +2,10 @@
 Testy API endpoints dla AI Analysis
 """
 import pytest
-import sys
-from pathlib import Path
 from fastapi.testclient import TestClient
 from unittest.mock import patch, Mock, AsyncMock
 import json
 from datetime import datetime
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.main import app
 from app.utils.database import Database
@@ -82,7 +78,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_results_all(self, client, test_headers):
         """Test GET /ai/analysis-results - wszystkie wyniki"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
                     "id": 1,
@@ -104,7 +100,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_results_filter_by_symbol(self, client, test_headers):
         """Test GET /ai/analysis-results?symbol=EUR/USD"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
                     "id": 1,
@@ -125,7 +121,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_results_filter_by_signal_type(self, client, test_headers):
         """Test GET /ai/analysis-results?signal_type=BUY"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
                     "id": 1,
@@ -154,7 +150,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_results_filter_by_min_agreement(self, client, test_headers):
         """Test GET /ai/analysis-results?min_agreement=70"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
                     "id": 1,
@@ -183,7 +179,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_results_with_limit(self, client, test_headers):
         """Test GET /ai/analysis-results?limit=10"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             # Zwróć 20 wyników
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {"id": i, "symbol": "EUR/USD", "final_signal": "BUY", "agreement_score": 75}
@@ -210,7 +206,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_by_id_success(self, client, test_headers):
         """Test GET /ai/analysis-results/{id} - istnieje"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_by_id.return_value = {
                 "id": 1,
                 "symbol": "EUR/USD",
@@ -232,7 +228,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_by_id_not_found(self, client, test_headers):
         """Test GET /ai/analysis-results/{id} - nie istnieje"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_by_id.return_value = None
             
             response = client.get(
@@ -244,7 +240,7 @@ class TestAIResultsEndpoints:
     
     def test_get_analysis_by_id_parses_json_fields(self, client, test_headers):
         """Test parsowania pól JSON w wynikach"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_by_id.return_value = {
                 "id": 1,
                 "symbol": "EUR/USD",
@@ -275,7 +271,7 @@ class TestTokenStatisticsEndpoints:
     
     def test_token_statistics_all_time(self, client, test_headers):
         """Test GET /ai/token-statistics - wszystkie czasy"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_token_statistics.return_value = {
                 "total_tokens": 10000,
                 "total_cost": 0.01,
@@ -298,7 +294,7 @@ class TestTokenStatisticsEndpoints:
     
     def test_token_statistics_with_date_range(self, client, test_headers):
         """Test GET /ai/token-statistics?start_date=...&end_date=..."""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_token_statistics.return_value = {
                 "total_tokens": 5000,
                 "total_cost": 0.005,
@@ -327,7 +323,7 @@ class TestTokenStatisticsEndpoints:
     
     def test_token_statistics_empty_database(self, client, test_headers):
         """Test GET /ai/token-statistics dla pustej bazy"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_token_statistics.return_value = {
                 "total_tokens": 0,
                 "total_cost": 0.0,
@@ -352,7 +348,7 @@ class TestConfigurationEndpoints:
     
     def test_get_analysis_config(self, client, test_headers):
         """Test GET /ai/analysis-config"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
                 "analysis_interval": 15,
@@ -373,7 +369,7 @@ class TestConfigurationEndpoints:
     
     def test_get_analysis_config_parses_symbols(self, client, test_headers):
         """Test parsowania enabled_symbols z JSON"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
                 "analysis_interval": 15,
@@ -394,7 +390,7 @@ class TestConfigurationEndpoints:
     
     def test_update_config_interval(self, client, test_headers):
         """Test PUT /ai/analysis-config - zmiana interwału"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.update_analysis_config.return_value = True
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
@@ -416,7 +412,7 @@ class TestConfigurationEndpoints:
     
     def test_update_config_symbols(self, client, test_headers):
         """Test PUT /ai/analysis-config - zmiana symboli"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.update_analysis_config.return_value = True
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
@@ -436,7 +432,7 @@ class TestConfigurationEndpoints:
     
     def test_update_config_threshold(self, client, test_headers):
         """Test PUT /ai/analysis-config - zmiana progu"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.update_analysis_config.return_value = True
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
@@ -456,7 +452,7 @@ class TestConfigurationEndpoints:
     
     def test_update_config_all_fields(self, client, test_headers):
         """Test PUT /ai/analysis-config - wszystkie pola"""
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.update_analysis_config.return_value = True
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
@@ -520,7 +516,7 @@ class TestTriggerAnalysisEndpoint:
     @pytest.mark.asyncio
     def test_trigger_analysis_default_symbols(self, client, test_headers):
         """Test POST /ai/trigger-analysis - domyślne symbole"""
-        with patch('app.main.get_auto_scheduler') as mock_scheduler_factory:
+        with patch('app.api.dependencies.get_auto_scheduler') as mock_scheduler_factory:
             mock_scheduler = Mock()
             mock_scheduler.run_analysis_cycle = AsyncMock(return_value=[
                 {"analysis_id": 1, "symbol": "EUR/USD", "final_signal": "BUY"}
@@ -547,7 +543,7 @@ class TestTriggerAnalysisEndpoint:
     @pytest.mark.asyncio
     def test_trigger_analysis_custom_symbols(self, client, test_headers):
         """Test POST /ai/trigger-analysis - niestandardowe symbole"""
-        with patch('app.main.get_auto_scheduler') as mock_scheduler_factory:
+        with patch('app.api.dependencies.get_auto_scheduler') as mock_scheduler_factory:
             mock_scheduler = Mock()
             mock_scheduler.run_analysis_cycle = AsyncMock(return_value=[
                 {"analysis_id": 1, "symbol": "XAU/USD"}
@@ -571,7 +567,7 @@ class TestTriggerAnalysisEndpoint:
     @pytest.mark.asyncio
     def test_trigger_analysis_custom_timeframe(self, client, test_headers):
         """Test POST /ai/trigger-analysis - niestandardowy timeframe"""
-        with patch('app.main.get_auto_scheduler') as mock_scheduler_factory:
+        with patch('app.api.dependencies.get_auto_scheduler') as mock_scheduler_factory:
             mock_scheduler = Mock()
             mock_scheduler.run_analysis_cycle = AsyncMock(return_value=[])
             mock_scheduler.get_statistics.return_value = {

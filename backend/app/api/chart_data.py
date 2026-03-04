@@ -23,8 +23,18 @@ async def get_chart_data(
     timeframe: str = Query("1h", description="Timeframe (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w)"),
     period: str = Query("1mo", description="Okres danych (1d, 5d, 1mo, 3mo, 6mo, 1y)")
 ) -> Dict[str, Any]:
-    """
-    Pobiera dane OHLCV oraz wskaźniki techniczne dla wykresów
+    """Pobiera dane OHLCV oraz wskaźniki techniczne dla wykresów.
+
+    Args:
+        symbol: Symbol (np. EUR/USD, AAPL/USD).
+        timeframe: Interwał świec (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w).
+        period: Okres danych (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y).
+
+    Returns:
+        Słownik z "candles", "indicators" (RSI, MACD, Bollinger, SMA).
+
+    Raises:
+        HTTPException: 400 przy nieprawidłowym timeframe/period, 404 gdy brak danych, 500 przy błędzie.
     """
     try:
         from ..services.market_data_service import MarketDataService
@@ -214,7 +224,14 @@ async def get_macro_data(
     request: Request,
     data_service=Depends(get_data_collection_service)
 ) -> Dict[str, Any]:
-    """Pobiera dane makroekonomiczne (Fed, inflacja, PKB, zatrudnienie)"""
+    """Pobiera dane makroekonomiczne (Fed, inflacja, PKB, zatrudnienie).
+
+    Returns:
+        Słownik z danymi makro (stopy Fed, inflacja, PKB, zatrudnienie).
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         macro_data = await data_service.get_all_macro_data()
         return macro_data

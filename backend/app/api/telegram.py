@@ -24,7 +24,14 @@ async def test_telegram_message(
     telegram=Depends(get_telegram_service),
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Testowe wysłanie wiadomości na Telegram"""
+    """Wysyła testową wiadomość sygnału na skonfigurowany chat Telegram.
+
+    Returns:
+        Słownik z success, message, timestamp.
+
+    Raises:
+        HTTPException: 500 przy błędzie wysyłki.
+    """
     try:
         logger.info("Sending test Telegram message")
         
@@ -57,7 +64,11 @@ async def test_telegram_message(
 @router.get("/get-chat-id")
 @limiter.limit("10/minute")
 async def get_chat_id_instructions(request: Request) -> Dict[str, Any]:
-    """Wyświetla instrukcje jak uzyskać Telegram CHAT_ID"""
+    """Zwraca instrukcję jak uzyskać Telegram CHAT_ID (bez API key).
+
+    Returns:
+        Słownik z message, steps, example_chat_id, note.
+    """
     instructions = {
         "message": "Jak uzyskać Telegram CHAT_ID",
         "steps": [
@@ -80,7 +91,14 @@ async def get_telegram_updates(
     request: Request,
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Pobiera ostatnie wiadomości od użytkowników (do znalezienia CHAT_ID)"""
+    """Pobiera ostatnie wiadomości z Telegram API (do znalezienia CHAT_ID).
+
+    Returns:
+        Słownik z success, message, updates, chat_ids.
+
+    Raises:
+        HTTPException: 500 gdy nie udało się pobrać updates.
+    """
     try:
         updates = await telegram.get_updates(limit=10)
         
@@ -131,7 +149,14 @@ async def test_telegram_connection(
     request: Request,
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Testuje połączenie z botem i możliwość wysyłania wiadomości"""
+    """Testuje połączenie z botem Telegram i wysyłkę do skonfigurowanego CHAT_ID.
+
+    Returns:
+        Słownik z success, bot_connected, bot_info, chat_test_sent, error, message.
+
+    Raises:
+        HTTPException: 500 gdy bot nie połączony lub błąd testu.
+    """
     try:
         result = await telegram.test_connection_with_chat()
         
@@ -167,7 +192,14 @@ async def get_telegram_statistics(
     db=Depends(get_database),
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Pobiera statystyki wysłanych wiadomości Telegram"""
+    """Pobiera statystyki wysłanych wiadomości Telegram (dzisiaj, tydzień, ostatnia).
+
+    Returns:
+        Słownik z today, week, botConnected, lastMessage.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         logger.info("Getting Telegram statistics")
         
@@ -216,7 +248,14 @@ async def get_telegram_settings(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera aktualne ustawienia powiadomień Telegram"""
+    """Pobiera aktualne ustawienia powiadomień Telegram i status wyciszenia.
+
+    Returns:
+        Słownik z success, settings, mute_status.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         settings = db.get_telegram_settings()
         mute_status = db.get_mute_status()
@@ -238,7 +277,17 @@ async def update_telegram_settings(
     settings: Dict[str, Any],
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Aktualizuje ustawienia powiadomień Telegram"""
+    """Aktualizuje ustawienia powiadomień Telegram (notifications_enabled, parse_mode, itd.).
+
+    Args:
+        settings: Słownik z polami do aktualizacji.
+
+    Returns:
+        Słownik z success, message, settings.
+
+    Raises:
+        HTTPException: 400 przy nieprawidłowych polach, 500 przy błędzie.
+    """
     try:
         allowed_fields = [
             'notifications_enabled',
@@ -283,7 +332,14 @@ async def mute_telegram_notifications(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Wycisza powiadomienia Telegram na określony czas"""
+    """Wycisza powiadomienia Telegram na wybrany czas (1h, 4h, 8h, 12h, 24h, 1d).
+
+    Returns:
+        Słownik z success, message, muted_until.
+
+    Raises:
+        HTTPException: 400 przy nieprawidłowym duration, 500 przy błędzie.
+    """
     try:
         body = await request.json()
         duration = body.get('duration')
@@ -333,7 +389,14 @@ async def unmute_telegram_notifications(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Wyłącza wyciszenie powiadomień Telegram"""
+    """Wyłącza wyciszenie – przywraca wysyłanie powiadomień Telegram.
+
+    Returns:
+        Słownik z success, message.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         success = db.set_mute_until(None)
         
@@ -361,7 +424,14 @@ async def toggle_telegram_notifications(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Przełącza powiadomienia Telegram ON/OFF"""
+    """Przełącza globalne włącz/wyłącz powiadomień Telegram.
+
+    Returns:
+        Słownik z success, enabled, message.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         new_state = db.toggle_telegram_notifications()
         

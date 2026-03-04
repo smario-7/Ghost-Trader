@@ -1,7 +1,7 @@
 """
 Router dla endpointów sygnałów
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Query
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Dict, Any
@@ -21,9 +21,18 @@ async def check_signals(
     request: Request,
     service=Depends(get_strategy_service)
 ) -> Dict[str, Any]:
-    """Sprawdza sygnały dla wszystkich aktywnych strategii"""
+    """Sprawdza sygnały dla wszystkich aktywnych strategii.
+
+    Returns:
+        Słownik z kluczem "results" – lista wyników dla każdej strategii.
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
-        results = await service.check_all_signals()
+        # Endpoint jest używany przez frontend do podglądu aktywności,
+        # więc nie powinien wysyłać powiadomień ani zapisywać sygnałów do bazy.
+        results = await service.check_all_signals(persist=False, notify=False)
         logger.info(f"Signals checked: {len(results)} strategies")
         return {"results": results}
     except Exception as e:
@@ -38,7 +47,17 @@ async def get_recent_signals(
     limit: int = Query(50, ge=1, le=500),
     service=Depends(get_strategy_service)
 ) -> Dict[str, Any]:
-    """Pobiera ostatnie sygnały"""
+    """Pobiera ostatnie sygnały.
+
+    Args:
+        limit: Maksymalna liczba sygnałów (1–500, domyślnie 50).
+
+    Returns:
+        Słownik z kluczem "signals".
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         signals = service.get_recent_signals(limit)
         return {"signals": signals}
@@ -51,11 +70,22 @@ async def get_recent_signals(
 @limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def get_strategy_signals(
     request: Request,
-    strategy_id: int,
+    strategy_id: int = Path(..., gt=0, description="ID strategii"),
     limit: int = Query(100, ge=1, le=500),
     service=Depends(get_strategy_service)
 ) -> Dict[str, Any]:
-    """Pobiera sygnały dla konkretnej strategii"""
+    """Pobiera sygnały dla wskazanej strategii.
+
+    Args:
+        strategy_id: ID strategii (większe od 0).
+        limit: Maksymalna liczba sygnałów (1–500, domyślnie 100).
+
+    Returns:
+        Słownik z kluczem "signals".
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         signals = service.get_strategy_signals(strategy_id, limit)
         return {"signals": signals}

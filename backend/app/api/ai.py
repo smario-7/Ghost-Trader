@@ -1,7 +1,7 @@
 """
 Router dla endpointów AI
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Query
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 import json
@@ -13,6 +13,8 @@ from typing import Optional, Dict, Any
 
 from .dependencies import verify_api_key, get_database, get_telegram_service, get_signal_aggregator, settings
 from ..config import get_polish_time
+from ..exceptions import AnalysisNotFoundException
+from ..models.models import AnalysisConfigUpdate
 from ..utils.logger import setup_logger
 
 limiter = Limiter(key_func=get_remote_address)
@@ -31,7 +33,18 @@ async def ai_analyze(
     telegram=Depends(get_telegram_service),
     aggregator=Depends(get_signal_aggregator)
 ) -> Dict[str, Any]:
-    """Kompleksowa analiza AI z agregacją sygnałów"""
+    """Uruchamia kompleksową analizę AI (AI + techniczne + makro + news) z agregacją sygnałów.
+
+    Args:
+        symbol: Symbol (np. EUR/USD).
+        timeframe: Interwał (domyślnie 1h).
+
+    Returns:
+        Słownik z analysis, aggregated, tokens_used, estimated_cost, analysis_id.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         from ..services.ai_strategy import AIStrategy
         
@@ -105,10 +118,20 @@ async def ai_market_overview(
     db=Depends(get_database),
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Pełny przegląd rynku dla symbolu"""
+    """Zwraca pełny przegląd rynku dla symbolu (analiza AI + techniczna + makro + news).
+
+    Args:
+        symbol: Symbol (np. EUR/USD).
+
+    Returns:
+        Słownik z wynikami analizy i agregacją.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         from ..services.ai_strategy import AIStrategy
-        
+
         logger.info(f"Generating market overview for {symbol}")
         
         ai_strategy = AIStrategy(telegram_service=telegram, database=db)
@@ -157,12 +180,25 @@ async def ai_sentiment(
     symbol: str,
     hours_back: int = 24
 ) -> Dict[str, Any]:
-    """Analiza sentymentu z wiadomości dla symbolu"""
+    """Analiza sentymentu z wiadomości finansowych dla symbolu.
+
+    Args:
+        symbol: Symbol (np. EUR/USD).
+        hours_back: Liczba godzin wstecz do analizy (domyślnie 24).
+
+    Returns:
+        Słownik z symbol, hours_analyzed, news_count, sentiment.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
+        from ..config import get_settings
         from ..services.ai_analysis_service import AIAnalysisService
         from ..services.data_collection_service import NewsService
         
-        ai_service = AIAnalysisService()
+        settings = get_settings()
+        ai_service = AIAnalysisService(api_key=settings.openai_api_key, model=settings.openai_model)
         news_service = NewsService()
         
         news = await news_service.get_financial_news(
@@ -193,11 +229,25 @@ async def ai_event_impact(
     symbol: str,
     context: Dict[str, Any] = None
 ) -> Dict[str, Any]:
-    """Analizuje wpływ konkretnego wydarzenia na rynek"""
+    """Analizuje wpływ konkretnego wydarzenia na rynek dla symbolu.
+
+    Args:
+        event: Opis wydarzenia.
+        symbol: Symbol (np. EUR/USD).
+        context: Opcjonalny kontekst (słownik).
+
+    Returns:
+        Słownik z event, symbol, impact.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
+        from ..config import get_settings
         from ..services.ai_analysis_service import AIAnalysisService
         
-        ai_service = AIAnalysisService()
+        settings = get_settings()
+        ai_service = AIAnalysisService(api_key=settings.openai_api_key, model=settings.openai_model)
         
         if context is None:
             context = {}
@@ -229,7 +279,20 @@ async def get_ai_analysis_results(
     min_agreement: Optional[int] = Query(None, ge=0, le=100, description="Minimalny agreement_score"),
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera wyniki analiz AI z bazy danych"""
+    """Pobiera listę wyników analiz AI z bazy z opcjonalnymi filtrami.
+
+    Args:
+        symbol: Filtruj po symbolu (opcjonalnie).
+        limit: Maks. liczba wyników (1–200, domyślnie 50).
+        signal_type: Filtruj po typie sygnału BUY/SELL/HOLD/NO_SIGNAL (opcjonalnie).
+        min_agreement: Minimalny agreement_score 0–100 (opcjonalnie).
+
+    Returns:
+        Słownik z results, count, filters_applied.
+
+    Raises:
+        HTTPException: 400 przy nieprawidłowym signal_type, 500 przy błędzie.
+    """
     try:
         logger.info(f"Fetching AI analysis results: symbol={symbol}, limit={limit}, signal_type={signal_type}, min_agreement={min_agreement}")
         
@@ -271,22 +334,28 @@ async def get_ai_analysis_results(
 @limiter.limit("60/hour")
 async def get_ai_analysis_by_id(
     request: Request,
-    analysis_id: int,
+    analysis_id: int = Path(..., gt=0, description="ID analizy AI"),
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera szczegóły pojedynczej analizy AI"""
+    """Pobiera szczegóły pojedynczej analizy AI po ID.
+
+    Args:
+        analysis_id: ID analizy (większe od 0).
+
+    Returns:
+        Słownik z danymi analizy (ai_*, technical_*, macro_*, news_*, final_signal, agreement_score, itd.).
+
+    Raises:
+        AnalysisNotFoundException: Obsługiwany globalnie jako 404.
+        HTTPException: 500 przy błędzie.
+    """
     try:
         logger.info(f"Fetching AI analysis by ID: {analysis_id}")
         
         result = db.get_ai_analysis_by_id(analysis_id)
-        
         if not result:
-            logger.warning(f"AI analysis not found: {analysis_id}")
-            raise HTTPException(
-                status_code=404,
-                detail=f"Analiza o ID {analysis_id} nie została znaleziona"
-            )
-        
+            raise AnalysisNotFoundException(analysis_id)
+
         if result.get('technical_details'):
             try:
                 result['technical_details'] = json.loads(result['technical_details'])
@@ -301,8 +370,8 @@ async def get_ai_analysis_by_id(
         
         logger.info(f"Successfully fetched AI analysis: {analysis_id}")
         return result
-        
-    except HTTPException:
+
+    except AnalysisNotFoundException:
         raise
     except Exception as e:
         logger.error(f"Error fetching AI analysis {analysis_id}: {str(e)}", exc_info=True)
@@ -317,7 +386,18 @@ async def get_token_statistics(
     end_date: Optional[str] = Query(None, description="Data końcowa (YYYY-MM-DD)"),
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera statystyki użycia tokenów OpenAI"""
+    """Pobiera statystyki użycia tokenów OpenAI (opcjonalnie w zakresie dat).
+
+    Args:
+        start_date: Data początkowa YYYY-MM-DD (opcjonalnie).
+        end_date: Data końcowa YYYY-MM-DD (opcjonalnie).
+
+    Returns:
+        Słownik ze statystykami (total_tokens, total_cost, period, itd.).
+
+    Raises:
+        HTTPException: 400 przy nieprawidłowym formacie daty, 500 przy błędzie.
+    """
     try:
         logger.info(f"Fetching token statistics: start_date={start_date}, end_date={end_date}")
         
@@ -359,22 +439,28 @@ async def get_analysis_config(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera konfigurację automatycznych analiz"""
+    """Pobiera bieżącą konfigurację automatycznych analiz AI.
+
+    Returns:
+        Słownik z analysis_interval, enabled_symbols, notification_threshold, is_active, itd.
+
+    Raises:
+        HTTPException: 500 przy błędzie.
+    """
     try:
         logger.info("Fetching analysis configuration")
-        
         config = db.get_analysis_config()
-        
-        if config.get('enabled_symbols'):
+        symbols = config.get("enabled_symbols")
+        if isinstance(symbols, list):
+            config["enabled_symbols"] = symbols
+        elif isinstance(symbols, str) and symbols:
             try:
-                config['enabled_symbols'] = json.loads(config['enabled_symbols'])
-            except:
-                config['enabled_symbols'] = []
+                config["enabled_symbols"] = json.loads(symbols)
+            except Exception:
+                config["enabled_symbols"] = []
         else:
-            config['enabled_symbols'] = []
-        
+            config["enabled_symbols"] = []
         logger.info(f"Analysis config: interval={config.get('analysis_interval')}min, symbols={len(config.get('enabled_symbols', []))}")
-        
         return config
         
     except Exception as e:
@@ -386,85 +472,32 @@ async def get_analysis_config(
 @limiter.limit("60/hour")
 async def update_analysis_config(
     request: Request,
-    config_update: Dict[str, Any],
+    config_update: AnalysisConfigUpdate,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Aktualizuje konfigurację automatycznych analiz"""
+    """Aktualizuje konfigurację automatycznych analiz AI (walidacja przez Pydantic)."""
     try:
-        logger.info(f"Updating analysis config: {config_update}")
-        
-        updates = {}
-        
-        if 'analysis_interval' in config_update:
-            interval = config_update['analysis_interval']
-            if not isinstance(interval, int) or interval < 5 or interval > 1440:
-                raise HTTPException(
-                    status_code=422,
-                    detail="analysis_interval musi być liczbą całkowitą między 5 a 1440"
-                )
-            updates['analysis_interval'] = interval
-        
-        if 'enabled_symbols' in config_update:
-            symbols = config_update['enabled_symbols']
-            if not isinstance(symbols, list):
-                raise HTTPException(
-                    status_code=422,
-                    detail="enabled_symbols musi być listą"
-                )
-            if len(symbols) > 50:
-                raise HTTPException(
-                    status_code=422,
-                    detail="enabled_symbols może zawierać maksymalnie 50 symboli"
-                )
-            for symbol in symbols:
-                if '/' not in symbol:
-                    raise HTTPException(
-                        status_code=422,
-                        detail=f"Symbol {symbol} musi zawierać '/' (np. EUR/USD)"
-                    )
-            updates['enabled_symbols'] = json.dumps(symbols)
-        
-        if 'notification_threshold' in config_update:
-            threshold = config_update['notification_threshold']
-            if not isinstance(threshold, int) or threshold < 0 or threshold > 100:
-                raise HTTPException(
-                    status_code=422,
-                    detail="notification_threshold musi być liczbą całkowitą między 0 a 100"
-                )
-            updates['notification_threshold'] = threshold
-        
-        if 'is_active' in config_update:
-            is_active = config_update['is_active']
-            if not isinstance(is_active, bool):
-                raise HTTPException(
-                    status_code=422,
-                    detail="is_active musi być wartością boolean"
-                )
-            updates['is_active'] = is_active
-        
+        updates = config_update.model_dump(exclude_unset=True)
         if not updates:
-            raise HTTPException(
-                status_code=400,
-                detail="Brak danych do aktualizacji"
-            )
-        
+            raise HTTPException(status_code=400, detail="Brak danych do aktualizacji")
+        logger.info(f"Updating analysis config: {list(updates.keys())}")
         db.update_analysis_config(updates)
-        
         updated_config = db.get_analysis_config()
-        
-        if updated_config.get('enabled_symbols'):
+        symbols = updated_config.get("enabled_symbols")
+        if isinstance(symbols, list):
+            updated_config["enabled_symbols"] = symbols
+        elif isinstance(symbols, str) and symbols:
             try:
-                updated_config['enabled_symbols'] = json.loads(updated_config['enabled_symbols'])
-            except:
-                updated_config['enabled_symbols'] = []
-        
-        logger.info(f"Analysis config updated successfully")
-        
+                updated_config["enabled_symbols"] = json.loads(symbols)
+            except Exception:
+                updated_config["enabled_symbols"] = []
+        else:
+            updated_config["enabled_symbols"] = []
+        logger.info("Analysis config updated successfully")
         return {
             "message": "Konfiguracja zaktualizowana pomyślnie",
-            "updated_config": updated_config
+            "updated_config": updated_config,
         }
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -480,7 +513,17 @@ async def trigger_manual_analysis(
     db=Depends(get_database),
     telegram=Depends(get_telegram_service)
 ) -> Dict[str, Any]:
-    """Ręcznie uruchamia cykl analiz AI"""
+    """Ręcznie uruchamia cykl analiz AI (dla domyślnych lub podanych symboli).
+
+    Args:
+        trigger_request: Opcjonalnie { "symbols": ["EUR/USD", ...], "timeframe": "1h" }.
+
+    Returns:
+        Słownik z message, results, statistics (total_symbols, successful, failed, tokens, cost, duration).
+
+    Raises:
+        HTTPException: 422 przy nieprawidłowym timeframe/symbols, 500 przy timeout lub błędzie.
+    """
     try:
         symbols = None
         timeframe = "1h"
@@ -517,11 +560,13 @@ async def trigger_manual_analysis(
                     )
         
         from ..services.auto_analysis_scheduler import AutoAnalysisScheduler
-        
+
+        sched_config = db.get_scheduler_config()
+        interval = sched_config.get("ai_analysis_interval") or settings.analysis_interval
         scheduler = AutoAnalysisScheduler(
             database=db,
             telegram=telegram,
-            interval_minutes=settings.analysis_interval
+            interval_minutes=interval
         )
         
         if symbols:

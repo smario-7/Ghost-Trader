@@ -1,13 +1,14 @@
 """
 Demo Etapu 2 - Signal Aggregator Service
-Pokazuje jak używać nowych komponentów razem
+Pokazuje jak używać nowych komponentów razem.
+
+Uruchomienie z katalogu backend: cd backend && PYTHONPATH=. python tests/demos/demo_etap2.py
 """
 import asyncio
 import sys
 from pathlib import Path
 
-# Dodaj katalog do PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from app.services.signal_aggregator_service import SignalAggregatorService
 from app.services.ai_strategy import AIStrategy

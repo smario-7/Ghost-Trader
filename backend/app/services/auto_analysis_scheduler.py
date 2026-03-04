@@ -126,10 +126,10 @@ class AutoAnalysisScheduler:
             enabled_symbols = config.get("enabled_symbols", [])
             
             if enabled_symbols and len(enabled_symbols) > 0:
-                self.logger.info(f"Loaded {len(enabled_symbols)} symbols from config")
+                self.logger.debug(f"Loaded {len(enabled_symbols)} symbols from config")
                 return enabled_symbols
             else:
-                self.logger.info(f"No symbols in config, using default list ({len(DEFAULT_SYMBOLS)} symbols)")
+                self.logger.debug(f"No symbols in config, using default list ({len(DEFAULT_SYMBOLS)} symbols)")
                 return DEFAULT_SYMBOLS.copy()
                 
         except Exception as e:
@@ -167,7 +167,7 @@ class AutoAnalysisScheduler:
             - Błędy są logowane ale nie przerywają całego cyklu
             - Statystyki są zapisywane w self.last_cycle_stats
         """
-        self.logger.info(f"Starting analysis cycle for {len(self.symbols)} symbols")
+        self.logger.debug(f"Starting analysis cycle for {len(self.symbols)} symbols")
         start_time = get_polish_time()
         
         # Odśwież listę symboli (może się zmienić przez API)
@@ -178,19 +178,16 @@ class AutoAnalysisScheduler:
         
         for symbol in self.symbols:
             try:
-                self.logger.info(f"📊 Analyzing {symbol}...")
+                self.logger.debug(f"Analyzing {symbol}...")
                 
-                # Uruchom analizę z timeout
                 result = await asyncio.wait_for(
                     self.analyze_symbol(symbol, timeframe="1h"),
                     timeout=self.timeout
                 )
                 
                 results.append(result)
-                
-                # Loguj wynik
-                self.logger.info(
-                    f"  ✓ {symbol}: {result.get('final_signal', 'N/A')} "
+                self.logger.debug(
+                    f"{symbol}: {result.get('final_signal', 'N/A')} "
                     f"({result.get('agreement_score', 0)}% agreement)"
                 )
                 

@@ -197,6 +197,32 @@ class ErrorResponse(BaseModel):
         }
 
 
+class SchedulerConfigUpdate(BaseModel):
+    """Model aktualizacji konfiguracji schedulera (wszystkie pola opcjonalne)."""
+    signal_check_enabled: Optional[bool] = None
+    ai_analysis_enabled: Optional[bool] = None
+    signal_check_interval: Optional[int] = Field(None, ge=1, le=1440, description="Interwał sprawdzania sygnałów (minuty)")
+    ai_analysis_interval: Optional[int] = Field(None, ge=5, le=1440, description="Interwał analiz AI (minuty)")
+    signal_hours_start: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$", description="Godzina startu okna sygnałów (HH:MM)")
+    signal_hours_end: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$", description="Godzina końca okna sygnałów (HH:MM)")
+    ai_hours_start: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$", description="Godzina startu okna analiz AI (HH:MM)")
+    ai_hours_end: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$", description="Godzina końca okna analiz AI (HH:MM)")
+    signal_active_days: Optional[str] = Field(None, description="Dni aktywności sygnałów: 1,2,3,4,5,6,7 (1=poniedziałek)")
+    ai_active_days: Optional[str] = Field(None, description="Dni aktywności analiz AI: 1,2,3,4,5,6,7")
+
+    @validator("signal_active_days", "ai_active_days")
+    def validate_days_format(cls, v):
+        if v is None or v == "":
+            return v
+        try:
+            days = [int(d.strip()) for d in v.split(",")]
+            if not all(1 <= d <= 7 for d in days):
+                raise ValueError("Każdy dzień musi być od 1 do 7")
+            return v
+        except (ValueError, AttributeError):
+            raise ValueError("Format: '1,2,3,4,5,6,7' (dni 1-7)")
+
+
 class StatisticsResponse(BaseModel):
     """Model statystyk"""
     total_strategies: int

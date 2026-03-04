@@ -3,15 +3,11 @@ Testy wydajności, timeoutów i bezpieczeństwa
 """
 import pytest
 import asyncio
-import sys
-from pathlib import Path
 from fastapi.testclient import TestClient
 from unittest.mock import patch, Mock, AsyncMock
 import time
 from concurrent.futures import ThreadPoolExecutor
 import json
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.main import app
 from app.utils.database import Database
@@ -41,7 +37,7 @@ class TestRateLimiting:
         # Uwaga: Ten test może nie działać z TestClient który nie respektuje rate limitów
         # W prawdziwym środowisku trzeba by użyć rzeczywistych requestów HTTP
         
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = []
             
             # Wykonaj wiele requestów
@@ -105,7 +101,7 @@ class TestConcurrency:
         
         with patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis, \
              patch('app.services.signal_aggregator_service.SignalAggregatorService.aggregate_signals') as mock_aggregate, \
-             patch('app.main.get_database') as mock_db_factory:
+             patch('app.api.dependencies.get_database') as mock_db_factory:
             
             # Setup mocks
             mock_db = Mock()
@@ -224,7 +220,7 @@ class TestSecurity:
     def test_sql_injection_protection(self, perf_client, perf_headers):
         """Test ochrony przed SQL injection"""
         
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = []
             
             # Próby SQL injection
@@ -249,7 +245,7 @@ class TestSecurity:
     def test_json_injection_protection(self, perf_client, perf_headers):
         """Test ochrony przed JSON injection"""
         
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.update_analysis_config.return_value = True
             mock_db.return_value.get_analysis_config.return_value = {
                 "id": 1,
@@ -280,7 +276,7 @@ class TestSecurity:
     def test_xss_protection_in_responses(self, perf_client, perf_headers):
         """Test ochrony przed XSS w odpowiedziach"""
         
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             # Symuluj dane z potencjalnym XSS
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
@@ -393,7 +389,7 @@ class TestPerformance:
     def test_api_response_time(self, perf_client, perf_headers):
         """Test czasu odpowiedzi API"""
         
-        with patch('app.main.get_database') as mock_db:
+        with patch('app.api.dependencies.get_database') as mock_db:
             mock_db.return_value.get_ai_analysis_results.return_value = [
                 {
                     "id": i,

@@ -1,14 +1,15 @@
 """
 Demo Etapu 3 - AIStrategy.comprehensive_analysis() z liczeniem tokenów
-Pokazuje pełną funkcjonalność rozbudowanej analizy AI
+Pokazuje pełną funkcjonalność rozbudowanej analizy AI.
+
+Uruchomienie z katalogu backend: cd backend && PYTHONPATH=. python tests/demos/demo_etap3.py
 """
 import asyncio
 import sys
 from pathlib import Path
 from datetime import datetime
 
-# Dodaj katalog do PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from app.services.ai_strategy import AIStrategy
 from app.services.signal_aggregator_service import SignalAggregatorService

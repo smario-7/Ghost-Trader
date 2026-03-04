@@ -41,11 +41,16 @@ const dashboardMethods = {
         }
     },
 
-    // Pobiera unikalne symbole z aktywnych strategii
+    // Pobiera unikalne symbole z aktywnych strategii (tylko poprawne formaty np. EUR/USD)
     async loadUniqueSymbols() {
         try {
             const data = await apiCall('/strategies');
-            return [...new Set(data.strategies.filter(s => s.is_active).map(s => s.symbol))];
+            const strategies = Array.isArray(data.strategies) ? data.strategies : [];
+            const symbols = strategies
+                .filter(s => s.is_active && s.symbol)
+                .map(s => typeof s.symbol === 'string' ? s.symbol.trim() : String(s.symbol))
+                .filter(s => s.includes('/') && s.length >= 6);
+            return [...new Set(symbols)];
         } catch {
             return [];
         }

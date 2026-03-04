@@ -3,11 +3,6 @@ Testy jednostkowe dla SignalAggregatorService
 """
 import pytest
 import asyncio
-import sys
-from pathlib import Path
-
-# Dodaj katalog główny do PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.signal_aggregator_service import SignalAggregatorService
 

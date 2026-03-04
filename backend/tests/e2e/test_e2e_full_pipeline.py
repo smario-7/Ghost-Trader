@@ -2,14 +2,10 @@
 Testy E2E (End-to-End) pełnego pipeline'u systemu
 """
 import pytest
-import sys
-from pathlib import Path
 from fastapi.testclient import TestClient
 from unittest.mock import patch, Mock, AsyncMock
 import json
 from datetime import datetime
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.main import app
 from app.utils.database import Database
@@ -46,7 +42,7 @@ class TestE2EFullPipeline:
         """
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
              patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis, \
              patch('app.services.signal_aggregator_service.SignalAggregatorService.aggregate_signals') as mock_aggregate:
             
@@ -134,8 +130,8 @@ class TestE2EFullPipeline:
         """
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
-             patch('app.main.get_auto_scheduler') as mock_scheduler_factory:
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
+             patch('app.api.dependencies.get_auto_scheduler') as mock_scheduler_factory:
             
             # Mock scheduler
             mock_scheduler = Mock()
@@ -207,7 +203,7 @@ class TestE2EFullPipeline:
         """
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
              patch('app.main.get_telegram_service', return_value=mock_telegram), \
              patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis, \
              patch('app.services.signal_aggregator_service.SignalAggregatorService.aggregate_signals') as mock_aggregate:
@@ -312,7 +308,7 @@ class TestE2EFullPipeline:
         """
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db):
+        with patch('app.api.dependencies.get_database', return_value=test_db):
             # 1. Utwórz 10 analiz
             symbols = ["EUR/USD", "GBP/USD", "USD/JPY", "EUR/USD", "XAU/USD",
                       "EUR/USD", "GBP/USD", "USD/CHF", "AUD/USD", "EUR/USD"]
@@ -365,7 +361,7 @@ class TestE2EFullPipeline:
         """
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
              patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis:
             
             # 1. Symuluj błąd analizy
@@ -397,7 +393,7 @@ class TestE2EDataConsistency:
         """Test spójności danych między różnymi endpointami"""
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
              patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis, \
              patch('app.services.signal_aggregator_service.SignalAggregatorService.aggregate_signals') as mock_aggregate:
             
@@ -477,7 +473,7 @@ class TestE2EDataConsistency:
         """Test dokładności statystyk tokenów"""
         test_db.initialize_default_config()
         
-        with patch('app.main.get_database', return_value=test_db), \
+        with patch('app.api.dependencies.get_database', return_value=test_db), \
              patch('app.services.ai_strategy.AIStrategy.comprehensive_analysis') as mock_analysis, \
              patch('app.services.signal_aggregator_service.SignalAggregatorService.aggregate_signals') as mock_aggregate:
             

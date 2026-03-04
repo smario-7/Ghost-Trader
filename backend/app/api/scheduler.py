@@ -4,10 +4,10 @@ Router dla endpointów schedulera
 from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-import re
 from typing import Dict, Any
 
 from .dependencies import verify_api_key, get_database, settings
+from ..models.models import SchedulerConfigUpdate
 from ..utils.logger import setup_logger
 
 limiter = Limiter(key_func=get_remote_address)
@@ -22,7 +22,14 @@ async def get_scheduler_config(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Pobiera konfigurację schedulera"""
+    """Pobiera konfigurację i status schedulera.
+
+    Returns:
+        Słownik z "success", "config" i "status".
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         config = db.get_scheduler_config()
         status = db.get_scheduler_status()
@@ -42,78 +49,27 @@ async def get_scheduler_config(
 @limiter.limit("30/minute")
 async def update_scheduler_config(
     request: Request,
+    body: SchedulerConfigUpdate,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Aktualizuje konfigurację schedulera"""
+    """Aktualizuje konfigurację schedulera.
+
+    Args:
+        body: Pola do aktualizacji (SchedulerConfigUpdate) – walidowane przez Pydantic.
+
+    Returns:
+        Słownik z "success", "message" i "config".
+
+    Raises:
+        HTTPException: 400 gdy brak danych do aktualizacji, 500 przy błędzie serwera.
+    """
     try:
-        body = await request.json()
-        updates = {}
-        
-        if 'signal_check_enabled' in body:
-            if not isinstance(body['signal_check_enabled'], bool):
-                raise HTTPException(status_code=400, detail="signal_check_enabled musi być boolean")
-            updates['signal_check_enabled'] = body['signal_check_enabled']
-        
-        if 'ai_analysis_enabled' in body:
-            if not isinstance(body['ai_analysis_enabled'], bool):
-                raise HTTPException(status_code=400, detail="ai_analysis_enabled musi być boolean")
-            updates['ai_analysis_enabled'] = body['ai_analysis_enabled']
-        
-        if 'signal_check_interval' in body:
-            interval = body['signal_check_interval']
-            if not isinstance(interval, int) or interval < 1 or interval > 1440:
-                raise HTTPException(
-                    status_code=400,
-                    detail="signal_check_interval musi być liczbą całkowitą 1-1440"
-                )
-            updates['signal_check_interval'] = interval
-        
-        if 'ai_analysis_interval' in body:
-            interval = body['ai_analysis_interval']
-            if not isinstance(interval, int) or interval < 5 or interval > 1440:
-                raise HTTPException(
-                    status_code=400,
-                    detail="ai_analysis_interval musi być liczbą całkowitą 5-1440"
-                )
-            updates['ai_analysis_interval'] = interval
-        
-        time_pattern = re.compile(r'^([01]\d|2[0-3]):([0-5]\d)$')
-        
-        for field in ['signal_hours_start', 'signal_hours_end', 'ai_hours_start', 'ai_hours_end']:
-            if field in body:
-                value = body[field]
-                if not isinstance(value, str) or not time_pattern.match(value):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"{field} musi być w formacie HH:MM (00:00-23:59)"
-                    )
-                updates[field] = value
-        
-        for field in ['signal_active_days', 'ai_active_days']:
-            if field in body:
-                value = body[field]
-                if not isinstance(value, str):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"{field} musi być stringiem"
-                    )
-                try:
-                    days = [int(d.strip()) for d in value.split(',')]
-                    if not all(1 <= d <= 7 for d in days):
-                        raise ValueError
-                except:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"{field} musi być w formacie '1,2,3,4,5,6,7' (dni 1-7)"
-                    )
-                updates[field] = value
-        
+        updates = body.model_dump(exclude_unset=True)
         if not updates:
             raise HTTPException(
                 status_code=400,
                 detail="Brak danych do aktualizacji"
             )
-        
         success = db.update_scheduler_config(updates)
         
         if success:
@@ -142,7 +98,14 @@ async def get_scheduler_status(
     request: Request,
     db=Depends(get_database)
 ) -> Dict[str, Any]:
-    """Zwraca bieżący status schedulerów"""
+    """Zwraca bieżący status schedulerów (sygnały, analizy AI).
+
+    Returns:
+        Słownik z "success" i "status".
+
+    Raises:
+        HTTPException: 500 przy błędzie serwera.
+    """
     try:
         status = db.get_scheduler_status()
         

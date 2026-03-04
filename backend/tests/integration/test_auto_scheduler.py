@@ -3,13 +3,9 @@ Testy jednostkowe dla AutoAnalysisScheduler
 """
 import pytest
 import asyncio
-import sys
-from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 import json
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.auto_analysis_scheduler import AutoAnalysisScheduler
 

@@ -3,10 +3,6 @@ Test integracji Etapu 4 - AutoAnalysisScheduler
 """
 import asyncio
 import sys
-from pathlib import Path
-
-# Dodaj ścieżkę do modułu app
-sys.path.insert(0, str(Path(__file__).parent))
 
 from app.utils.database import Database
 from app.services.telegram_service import TelegramService

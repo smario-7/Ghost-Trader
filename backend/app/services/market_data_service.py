@@ -47,7 +47,9 @@ class MarketDataService:
         except Exception as e:
             self.logger.warning(f"Nie udało się ustawić headers: {e}")
     
-    def _retry_with_backoff(self, func, max_retries=3, initial_delay=1):
+    def _retry_with_backoff(
+        self, func: Any, max_retries: int = 3, initial_delay: int = 1
+    ) -> Any:
         """
         Wykonuje funkcję z exponential backoff retry
         
@@ -69,7 +71,7 @@ class MarketDataService:
             
             if attempt < max_retries - 1:
                 delay = initial_delay * (2 ** attempt) + random.uniform(0, 1)
-                self.logger.info(f"Ponowna próba za {delay:.1f}s...")
+                self.logger.debug(f"Ponowna próba za {delay:.1f}s...")
                 time.sleep(delay)
         
         return None
@@ -95,16 +97,23 @@ class MarketDataService:
         }
         days = period_days.get(period, 30)
         
-        # Mapowanie timeframe na interwał
+        # Mapowanie timeframe na interwał (w godzinach)
         interval_hours = {
             '1m': 1/60, '5m': 5/60, '15m': 15/60, '30m': 30/60,
             '1h': 1, '4h': 4, '1d': 24, '1w': 168
         }
         hours = interval_hours.get(timeframe, 24)
+        if hours <= 0:
+            hours = 1.0
         
-        # Liczba punktów danych
+        # Częstotliwość dla date_range: unikamy 0H (powoduje arange error)
+        if hours >= 1:
+            freq = f'{int(hours)}H'
+        else:
+            freq = '1H'
+        
         num_points = int((days * 24) / hours)
-        num_points = min(num_points, 1000)  # Limit
+        num_points = min(max(num_points, 2), 1000)
         
         # Generuj realistyczne dane
         base_price = 100.0
@@ -112,12 +121,14 @@ class MarketDataService:
             base_price = 1.1
         elif 'JPY' in symbol:
             base_price = 150.0
+        elif 'XAU' in symbol or 'XAG' in symbol:
+            base_price = 24.0 if 'XAG' in symbol else 2000.0
         elif 'AAPL' in symbol or 'MSFT' in symbol:
             base_price = 180.0
         elif 'SPX' in symbol or 'DJI' in symbol:
             base_price = 4500.0
         
-        dates = pd.date_range(end=get_polish_time(), periods=num_points, freq=f'{int(hours)}H')
+        dates = pd.date_range(end=get_polish_time(), periods=num_points, freq=freq)
         
         # Generuj cenę z realistic volatility
         volatility = 0.02  # 2% volatility
@@ -144,11 +155,11 @@ class MarketDataService:
         Returns:
             Symbol w formacie dla Yahoo Finance
         """
-        self.logger.info(f"🔍 Konwersja symbolu: {symbol}")
+        self.logger.debug(f"Konwersja symbolu: {symbol}")
         
         if '/' in symbol:
             base, quote = symbol.split('/')
-            self.logger.info(f"🔍  base={base}, quote={quote}")
+            self.logger.debug(f"base={base}, quote={quote}")
             
             # Forex - pary gdzie USD jest bazową walutą (USD/JPY, USD/CHF, itp.)
             # TO MUSI BYĆ PIERWSZE, bo USD/JPY ma base='USD'
@@ -164,7 +175,7 @@ class MarketDataService:
                     'NZD': 'NZDUSD=X',  # USD/NZD nie istnieje, używamy odwrotnej pary
                 }
                 result = usd_forex_symbols.get(quote, f'{quote}=X')
-                self.logger.info(f"🔍  USD jako base -> {result}")
+                self.logger.debug(f"USD jako base -> {result}")
                 return result
             
             # Forex - pary gdzie USD jest kwotowaną walutą (EUR/USD, GBP/USD, itp.)
@@ -180,7 +191,7 @@ class MarketDataService:
                     'CAD': 'CAD=X',  # To jest USD/CAD w Yahoo Finance
                 }
                 result = forex_symbols.get(base, f'{base}{quote}=X')
-                self.logger.info(f"🔍  USD jako quote -> {result}")
+                self.logger.debug(f"USD jako quote -> {result}")
                 return result
             
             # Metale szlachetne
@@ -245,7 +256,7 @@ class MarketDataService:
                     self.logger.warning(f"Forex {symbol} może nie mieć danych dla {timeframe}, używam 1h")
                     return '1h'
                 elif timeframe == '15m':
-                    self.logger.info(f"Forex {symbol} dla {timeframe}, próbuję 1h jeśli 15m nie zadziała")
+                    self.logger.debug(f"Forex {symbol} dla {timeframe}, próbuję 1h jeśli 15m nie zadziała")
                     return '15m'
         
         return interval
@@ -325,11 +336,14 @@ class MarketDataService:
                         
                         data = self._retry_with_backoff(fetch_alt, max_retries=2)
                         if data is not None and not data.empty:
-                            self.logger.info(f"✅ Udało się pobrać dane z alternatywnym okresem {alt_period} dla {symbol}")
+                            self.logger.debug(f"Udało się pobrać dane z alternatywnym okresem {alt_period} dla {symbol}")
                             break
                     except Exception as e2:
                         self.logger.error(f"Błąd przy alternatywnym pobieraniu danych dla {symbol}: {e2}")
                         data = pd.DataFrame()
+            
+            if data is None:
+                data = pd.DataFrame()
             
             if data.empty:
                 self.logger.warning(f"Brak danych dla {symbol} ({yf_symbol}) - period: {period}, interval: {interval}")
@@ -339,12 +353,12 @@ class MarketDataService:
                     if base in ['AUD', 'EUR', 'GBP', 'JPY', 'CHF', 'NZD', 'CAD']:
                         # Dla niektórych par Forex, Yahoo Finance może wymagać innego formatu
                         alt_symbol = f"{base}{quote}" if quote != 'USD' else f"{base}USD"
-                        self.logger.info(f"Próba alternatywnego symbolu: {alt_symbol}")
+                        self.logger.debug(f"Próba alternatywnego symbolu: {alt_symbol}")
                         try:
                             alt_ticker = yf.Ticker(alt_symbol)
                             data = alt_ticker.history(period=period, interval=interval)
                             if not data.empty:
-                                self.logger.info(f"Udało się pobrać dane z alternatywnego symbolu {alt_symbol}")
+                                self.logger.debug(f"Udało się pobrać dane z alternatywnego symbolu {alt_symbol}")
                         except Exception as e:
                             self.logger.warning(f"Alternatywny symbol {alt_symbol} też nie zadziałał: {e}")
                 

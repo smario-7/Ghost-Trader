@@ -98,56 +98,32 @@ def setup_scheduler():
     logger.info("🤖 TRADING BOT SCHEDULER STARTED")
     logger.info("=" * 60)
     logger.info(f"Environment: {settings.environment}")
-    logger.info(f"Check interval: {settings.check_interval} minutes")
     logger.info(f"Database: {settings.database_path}")
     logger.info("=" * 60)
-    
-    # Inicjalizuj serwisy
+
     db = Database(settings.database_path)
     db.initialize()
-    
+    scheduler_config = db.get_scheduler_config()
+    logger.info(
+        f"Interwały z DB: sygnały={scheduler_config['signal_check_interval']} min, "
+        f"AI={scheduler_config['ai_analysis_interval']} min"
+    )
+
     telegram = TelegramService(
         bot_token=settings.telegram_bot_token,
         chat_id=settings.telegram_chat_id,
         database=db
     )
-    
+
     strategy_service = StrategyService(db, telegram)
-    
-    # Inicjalizuj AutoAnalysisScheduler (Etap 4)
+
     auto_scheduler = AutoAnalysisScheduler(
         database=db,
         telegram=telegram,
-        interval_minutes=settings.analysis_interval if hasattr(settings, 'analysis_interval') else 30,
+        interval_minutes=scheduler_config["ai_analysis_interval"],
         timeout=settings.analysis_timeout if hasattr(settings, 'analysis_timeout') else 60,
         pause_between_symbols=settings.analysis_pause_between_symbols if hasattr(settings, 'analysis_pause_between_symbols') else 2
     )
-    
-    # Referencja do zadania sprawdzania sygnałów (do dynamicznej aktualizacji)
-    signal_check_job = None
-    
-    def update_signal_check_interval():
-        """Aktualizuje interwał sprawdzania sygnałów na podstawie aktywnych strategii"""
-        nonlocal signal_check_job
-        
-        try:
-            # Oblicz nowy interwał
-            new_interval = calculate_dynamic_interval(db, settings.check_interval)
-            
-            # Jeśli zadanie już istnieje, usuń je
-            if signal_check_job is not None:
-                schedule.cancel_job(signal_check_job)
-            
-            # Utwórz nowe zadanie z nowym interwałem
-            signal_check_job = schedule.every(new_interval).minutes.do(run_async_task)
-            
-            logger.info(f"🔄 Zaktualizowano interwał sprawdzania sygnałów: {new_interval} minut")
-            
-            return new_interval
-        
-        except Exception as e:
-            logger.error(f"Błąd podczas aktualizacji interwału: {e}")
-            return settings.check_interval
     
     async def check_signals_task():
         """Task sprawdzający sygnały"""
@@ -156,7 +132,8 @@ def setup_scheduler():
             start_time = get_polish_time()
             
             # Sprawdź sygnały
-            results = await strategy_service.check_all_signals()
+            # Scheduler wykonuje prawdziwy check: zapisuje sygnały i wysyła powiadomienia.
+            results = await strategy_service.check_all_signals(persist=True, notify=True)
             
             # Policz sygnały
             buy_count = sum(1 for r in results if r.get('signal') == 'BUY')
@@ -169,10 +146,6 @@ def setup_scheduler():
                 f"✅ Signal check completed in {duration:.2f}s | "
                 f"BUY: {buy_count}, SELL: {sell_count}, HOLD: {hold_count}"
             )
-            
-            # Po każdym sprawdzeniu sygnałów, zaktualizuj interwał
-            # (na wypadek zmiany aktywnych strategii)
-            update_signal_check_interval()
             
         except Exception as e:
             logger.error(f"❌ Error during signal check: {e}", exc_info=True)
@@ -330,22 +303,37 @@ def setup_scheduler():
         except Exception as e:
             logger.error(f"Error cleaning backups: {e}")
     
+    last_scheduler_config = {
+        'signal_check_interval': None,
+        'ai_analysis_interval': None,
+        'signal_check_enabled': None,
+        'ai_analysis_enabled': None,
+    }
+
     def update_scheduler_intervals():
         """
         Aktualizuje interwały schedulerów na podstawie konfiguracji z bazy danych
-        Funkcja wywoływana okresowo aby reagować na zmiany konfiguracji
+        tylko gdy konfiguracja się zmieniła (bez resetowania odliczania co 60s).
         """
         try:
             config = db.get_scheduler_config()
-            
-            # Usuń stare zadania schedulera (zachowaj backup)
+            prev = last_scheduler_config
+            if (
+                prev['signal_check_interval'] == config['signal_check_interval']
+                and prev['ai_analysis_interval'] == config['ai_analysis_interval']
+                and prev['signal_check_enabled'] == config['signal_check_enabled']
+                and prev['ai_analysis_enabled'] == config['ai_analysis_enabled']
+            ):
+                return
+            last_scheduler_config['signal_check_interval'] = config['signal_check_interval']
+            last_scheduler_config['ai_analysis_interval'] = config['ai_analysis_interval']
+            last_scheduler_config['signal_check_enabled'] = config['signal_check_enabled']
+            last_scheduler_config['ai_analysis_enabled'] = config['ai_analysis_enabled']
+
             schedule.clear('signal_check')
             schedule.clear('ai_analysis')
-            
-            # Dodaj nowe zadania z aktualnymi interwałami z bazy
             schedule.every(config['signal_check_interval']).minutes.do(run_async_task).tag('signal_check')
             schedule.every(config['ai_analysis_interval']).minutes.do(run_auto_analysis).tag('ai_analysis')
-            
             logger.debug(
                 f"📊 Intervals updated from DB: "
                 f"signals={config['signal_check_interval']}min, "
@@ -356,7 +344,11 @@ def setup_scheduler():
     
     # Pobierz konfigurację z bazy danych
     scheduler_config = db.get_scheduler_config()
-    
+    last_scheduler_config['signal_check_interval'] = scheduler_config['signal_check_interval']
+    last_scheduler_config['ai_analysis_interval'] = scheduler_config['ai_analysis_interval']
+    last_scheduler_config['signal_check_enabled'] = scheduler_config['signal_check_enabled']
+    last_scheduler_config['ai_analysis_enabled'] = scheduler_config['ai_analysis_enabled']
+
     # Zaplanuj sprawdzanie sygnałów z interwałem z bazy
     schedule.every(scheduler_config['signal_check_interval']).minutes.do(run_async_task).tag('signal_check')
     logger.info(

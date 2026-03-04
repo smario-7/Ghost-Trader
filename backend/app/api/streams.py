@@ -18,8 +18,13 @@ router = APIRouter(prefix="/stream", tags=["SSE Streams"])
 sse_queues = []
 
 
-async def broadcast_sse_event(event_type: str, data: dict):
-    """Wysyła event do wszystkich połączonych klientów SSE"""
+async def broadcast_sse_event(event_type: str, data: dict) -> None:
+    """Wysyła event do wszystkich połączonych klientów SSE.
+
+    Args:
+        event_type: Typ zdarzenia (np. "signal", "update").
+        data: Dane do wysłania (będą zserializowane do JSON).
+    """
     message = {
         "event": event_type,
         "data": json.dumps(data)
@@ -40,8 +45,12 @@ async def stream_updates(
     service=Depends(get_strategy_service),
     db=Depends(get_database)
 ) -> StreamingResponse:
-    """Server-Sent Events endpoint do pushowania aktualizacji danych w czasie rzeczywistym"""
-    
+    """Server-Sent Events – strumień aktualizacji sygnałów i logów w czasie rzeczywistym.
+
+    Returns:
+        StreamingResponse z media_type text/event-stream.
+    """
+
     async def event_generator():
         try:
             while True:
@@ -98,8 +107,12 @@ async def stream_ai_updates(
     request: Request,
     db=Depends(get_database)
 ) -> StreamingResponse:
-    """Server-Sent Events stream dla real-time aktualizacji AI analiz"""
-    
+    """Server-Sent Events – strumień aktualizacji analiz AI i konfiguracji w czasie rzeczywistym.
+
+    Returns:
+        StreamingResponse z media_type text/event-stream.
+    """
+
     async def sse_generator():
         queue = asyncio.Queue()
         sse_queues.append(queue)
@@ -108,13 +121,16 @@ async def stream_ai_updates(
             try:
                 token_stats = db.get_token_statistics()
                 config = db.get_analysis_config()
-                
-                if config.get('enabled_symbols'):
+                symbols = config.get("enabled_symbols")
+                if isinstance(symbols, list):
+                    config["enabled_symbols"] = symbols
+                elif isinstance(symbols, str) and symbols:
                     try:
-                        config['enabled_symbols'] = json.loads(config['enabled_symbols'])
-                    except:
-                        config['enabled_symbols'] = []
-                
+                        config["enabled_symbols"] = json.loads(symbols)
+                    except Exception:
+                        config["enabled_symbols"] = []
+                else:
+                    config["enabled_symbols"] = []
                 yield f"event: token_update\ndata: {json.dumps(token_stats)}\n\n"
                 yield f"event: config_change\ndata: {json.dumps(config)}\n\n"
                 
